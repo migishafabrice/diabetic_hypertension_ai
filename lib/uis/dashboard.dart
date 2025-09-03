@@ -1,406 +1,262 @@
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:healthapp/widgets/app_bottom_nav.dart';
 
-class Dashboard extends StatelessWidget {
+class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
+
+  @override
+  State<Dashboard> createState() => _DashboardState();
+}
+
+class _DashboardState extends State<Dashboard> {
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(context),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 80),
+                child: Column(
+                  children: [
+                    _buildHealthOverview(),
+                    _buildChartsSection(),
+                    _buildStatsGrid(),
+                    _buildRecentActivities(),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+            AppBottomNavigationBar(
+              selectedIndex: _selectedIndex,
+              onTap: (index) {
+                _onItemTapped(index);
+                // Example navigation: match previous logic
+                if (index == 0) {
+                  Navigator.pushReplacementNamed(context, '/Dashboard');
+                }
+                if (index == 1) {
+                  Navigator.pushReplacementNamed(
+                    context,
+                    '/BloodPressureEntry',
+                  );
+                }
+                if (index == 2) {
+                  Navigator.pushReplacementNamed(context, '/BloodSugarEntry');
+                }
+                if (index == 3) {
+                  Navigator.pushReplacementNamed(context, '/FoodIntakeEntry');
+                }
+                if (index == 4) {
+                  Navigator.pushReplacementNamed(context, '/ActivityEntry');
+                }
+                if (index == 5) {
+                  Navigator.pushReplacementNamed(context, '/MedicationEntry');
+                }
+                if (index == 6) {
+                  Navigator.pushReplacementNamed(context, '/Reports');
+                } // Add other navigation as needed.
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.only(
-              bottom: 80,
-            ), // Add padding for nav bar
-            child: Column(
-              children: [
-                // Header Section
-                _buildHeader(context),
-
-                // Health Stats Overview
-                _buildHealthOverview(),
-
-                // Activity Charts Section
-                _buildChartsSection(),
-
-                // Detailed Stats Grid
-                _buildStatsGrid(),
-
-                // Recent Activities
-                _buildRecentActivities(),
-
-                const SizedBox(height: 20),
-              ],
+          IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              color: Colors.blue,
+              size: 20,
+            ),
+            onPressed: () {},
+          ),
+          const Text(
+            'Dashboard',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
           ),
-
-          // Position the navigation bar at the bottom
-          Positioned(
-            left: 20,
-            right: 20,
-            bottom: 20,
-            child: _buildBottomNavigationBar(),
+          const CircleAvatar(
+            radius: 20,
+            backgroundColor: Colors.blue,
+            child: Icon(Icons.person, color: Colors.white, size: 20),
           ),
         ],
       ),
     );
   }
-}
 
-Widget _buildHeader(BuildContext context) {
-  return Container(
-    padding: const EdgeInsets.only(top: 60, left: 20, right: 20, bottom: 30),
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Colors.white, Color.fromARGB(255, 136, 194, 241)],
-      ),
-      borderRadius: const BorderRadius.only(
-        bottomLeft: Radius.circular(30),
-        bottomRight: Radius.circular(30),
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.blue.withOpacity(0.2),
-          blurRadius: 15,
-          offset: const Offset(0, 5),
-        ),
-      ],
-    ),
-    child: Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: Colors.blue[700]!.withOpacity(0.1),
-              child: IconButton(
-                icon: Icon(Icons.arrow_left, color: Colors.blue[700], size: 20),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-            const Text(
-              'Health Dashboard',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: Colors.blue[700]!.withOpacity(0.1),
-              child: Icon(Icons.person, color: Colors.blue[700], size: 20),
-            ),
-          ],
-        ),
-        const SizedBox(height: 25),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _HeaderStat(
-              value: '7,850',
-              label: 'Steps Today',
-              icon: Icons.directions_walk,
-              color: Colors.blue[700]!,
-            ),
-            _HeaderStat(
-              value: '2,340',
-              label: 'Calories',
-              icon: CupertinoIcons.flame,
+  Widget _buildHealthOverview() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: _HealthMetricCard(
+              title: 'Heart Rate',
+              value: '72',
+              unit: 'bpm',
+              icon: CupertinoIcons.heart,
               color: Colors.red,
+              trend: '+2',
             ),
-            _HeaderStat(
-              value: '7h 20m',
-              label: 'Sleep',
-              icon: CupertinoIcons.moon,
-              color: Colors.green,
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildHealthOverview() {
-  return Padding(
-    padding: const EdgeInsets.all(20),
-    child: Row(
-      children: [
-        Expanded(
-          child: _HealthMetricCard(
-            title: 'Heart Rate',
-            value: '72',
-            unit: 'bpm',
-            icon: CupertinoIcons.heart,
-            color: Colors.red,
-            trend: '+2',
           ),
-        ),
-        const SizedBox(width: 15),
-        Expanded(
-          child: _HealthMetricCard(
-            title: 'Blood Pressure',
-            value: '120/80',
-            unit: 'mmHg',
+          const SizedBox(width: 12),
+          Expanded(
+            child: _HealthMetricCard(
+              title: 'Blood Pressure',
+              value: '120/80',
+              unit: 'mmHg',
+              icon: CupertinoIcons.drop,
+              color: Colors.blue,
+              trend: 'Normal',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChartsSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Weekly Progress',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            height: 160,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(12.0),
+              child: _WeeklyActivityChart(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsGrid() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        children: [
+          _StatGridItem(
+            title: 'Distance',
+            value: '5.2 km',
+            icon: CupertinoIcons.map,
+            color: Colors.green,
+          ),
+          _StatGridItem(
+            title: 'Active Time',
+            value: '1h 15m',
+            icon: CupertinoIcons.clock,
+            color: Colors.amber,
+          ),
+          _StatGridItem(
+            title: 'Water',
+            value: '2.1 L',
             icon: CupertinoIcons.drop,
-            color: Colors.blue[700]!,
-            trend: 'Normal',
+            color: Colors.blue,
           ),
-        ),
-      ],
-    ),
-  );
-}
+          _StatGridItem(
+            title: 'BMI',
+            value: '22.1',
+            icon: Icons.line_weight,
+            color: Colors.purple,
+          ),
+        ],
+      ),
+    );
+  }
 
-Widget _buildChartsSection() {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Weekly Progress',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 15),
-        Container(
-          height: 200,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.white, Color.fromARGB(255, 200, 225, 250)],
+  Widget _buildRecentActivities() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Recent Activities',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.blue.withOpacity(0.15),
-                blurRadius: 15,
-                offset: const Offset(0, 5),
+          ),
+          const SizedBox(height: 10),
+          Column(
+            children: [
+              _ActivityItem(
+                icon: Icons.directions_run,
+                title: 'Morning Run',
+                subtitle: '5.2 km • 32 min',
+                time: 'Today, 7:00 AM',
+                color: Colors.blue,
+              ),
+              _ActivityItem(
+                icon: CupertinoIcons.heart,
+                title: 'Heart Rate Check',
+                subtitle: '72 bpm • Normal',
+                time: 'Today, 12:30 PM',
+                color: Colors.red,
+              ),
+              _ActivityItem(
+                icon: CupertinoIcons.moon,
+                title: 'Sleep Analysis',
+                subtitle: '7h 20m • Good',
+                time: 'Yesterday, 11:00 PM',
+                color: Colors.green,
               ),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Stack(
-              children: [
-                // Blur background
-                Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white,
-                        Color.fromARGB(255, 180, 215, 245),
-                      ],
-                    ),
-                  ),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                    child: Container(color: Colors.transparent),
-                  ),
-                ),
-                // Chart
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: _WeeklyActivityChart(),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildStatsGrid() {
-  return Padding(
-    padding: const EdgeInsets.all(20),
-    child: GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 15,
-      mainAxisSpacing: 15,
-      children: [
-        _StatGridItem(
-          title: 'Distance',
-          value: '5.2 km',
-          icon: CupertinoIcons.map,
-          color: Colors.green,
-        ),
-        _StatGridItem(
-          title: 'Active Time',
-          value: '1h 15m',
-          icon: CupertinoIcons.clock,
-          color: Colors.amber,
-        ),
-        _StatGridItem(
-          title: 'Water',
-          value: '2.1 L',
-          icon: CupertinoIcons.drop,
-          color: Colors.blue[700]!,
-        ),
-        _StatGridItem(
-          title: 'BMI',
-          value: '22.1',
-          icon: Icons.line_weight,
-          color: Colors.purple,
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildRecentActivities() {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Recent Activities',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 15),
-        Column(
-          children: [
-            _ActivityItem(
-              icon: Icons.directions_run,
-              title: 'Morning Run',
-              subtitle: '5.2 km • 32 min',
-              time: 'Today, 7:00 AM',
-              color: Colors.blue[700]!,
-            ),
-            _ActivityItem(
-              icon: CupertinoIcons.heart,
-              title: 'Heart Rate Check',
-              subtitle: '72 bpm • Normal',
-              time: 'Today, 12:30 PM',
-              color: Colors.red,
-            ),
-            _ActivityItem(
-              icon: CupertinoIcons.moon,
-              title: 'Sleep Analysis',
-              subtitle: '7h 20m • Good',
-              time: 'Yesterday, 11:00 PM',
-              color: Colors.green,
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildBottomNavigationBar() {
-  int selectedIndex = 0; // You'll need to manage state for this
-
-  return Container(
-    width: double.infinity,
-    height: 70,
-    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-    decoration: BoxDecoration(
-      color: Colors.blue[100],
-      borderRadius: BorderRadius.circular(25),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.blue.withOpacity(0.2),
-          blurRadius: 10,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _BottomNavItem(
-          icon: CupertinoIcons.home,
-          label: 'Home',
-          isSelected: selectedIndex == 0,
-          onTap: () => _onItemTapped(0),
-        ),
-        _BottomNavItem(
-          icon: Icons.directions_run,
-          label: 'Activity',
-          isSelected: selectedIndex == 1,
-          onTap: () => _onItemTapped(1),
-        ),
-        _BottomNavItem(
-          icon: CupertinoIcons.heart,
-          label: 'Health',
-          isSelected: selectedIndex == 2,
-          onTap: () => _onItemTapped(2),
-        ),
-        _BottomNavItem(
-          icon: CupertinoIcons.settings,
-          label: 'Settings',
-          isSelected: selectedIndex == 3,
-          onTap: () => _onItemTapped(3),
-        ),
-      ],
-    ),
-  );
-}
-
-void _onItemTapped(int i) {}
-
-class _HeaderStat extends StatelessWidget {
-  final String value;
-  final String label;
-  final IconData icon;
-  final Color color;
-
-  const _HeaderStat({
-    required this.value,
-    required this.label,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 20),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      ],
+        ],
+      ),
     );
   }
+
+  // Replaced by AppBottomNavigationBar.
 }
 
 class _HealthMetricCard extends StatelessWidget {
@@ -423,63 +279,63 @@ class _HealthMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-        border: Border.all(color: color.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.08)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 18),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: trend == 'Normal'
-                      ? Colors.green.withOpacity(0.1)
-                      : color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  trend,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
                   style: TextStyle(
-                    fontSize: 12,
-                    color: trend == 'Normal' ? Colors.green : color,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: color,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
+                Text(
+                  unit,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
             ),
           ),
-          Text(unit, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-          Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: trend == 'Normal'
+                  ? Colors.green.withOpacity(0.08)
+                  : color.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              trend,
+              style: TextStyle(
+                fontSize: 12,
+                color: trend == 'Normal' ? Colors.green : color,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -571,9 +427,9 @@ class _WeeklyActivityChart extends StatelessWidget {
             barRods: [
               BarChartRodData(
                 toY: 30,
-                color: Colors.blue[700],
-                width: 15,
-                borderRadius: BorderRadius.circular(4),
+                color: Colors.blue,
+                width: 12,
+                borderRadius: BorderRadius.circular(2),
               ),
             ],
           ),
@@ -582,9 +438,9 @@ class _WeeklyActivityChart extends StatelessWidget {
             barRods: [
               BarChartRodData(
                 toY: 45,
-                color: Colors.blue[700],
-                width: 15,
-                borderRadius: BorderRadius.circular(4),
+                color: Colors.blue,
+                width: 12,
+                borderRadius: BorderRadius.circular(2),
               ),
             ],
           ),
@@ -593,9 +449,9 @@ class _WeeklyActivityChart extends StatelessWidget {
             barRods: [
               BarChartRodData(
                 toY: 25,
-                color: Colors.blue[700],
-                width: 15,
-                borderRadius: BorderRadius.circular(4),
+                color: Colors.blue,
+                width: 12,
+                borderRadius: BorderRadius.circular(2),
               ),
             ],
           ),
@@ -604,9 +460,9 @@ class _WeeklyActivityChart extends StatelessWidget {
             barRods: [
               BarChartRodData(
                 toY: 50,
-                color: Colors.blue[700],
-                width: 15,
-                borderRadius: BorderRadius.circular(4),
+                color: Colors.blue,
+                width: 12,
+                borderRadius: BorderRadius.circular(2),
               ),
             ],
           ),
@@ -615,9 +471,9 @@ class _WeeklyActivityChart extends StatelessWidget {
             barRods: [
               BarChartRodData(
                 toY: 35,
-                color: Colors.blue[700],
-                width: 15,
-                borderRadius: BorderRadius.circular(4),
+                color: Colors.blue,
+                width: 12,
+                borderRadius: BorderRadius.circular(2),
               ),
             ],
           ),
@@ -626,9 +482,9 @@ class _WeeklyActivityChart extends StatelessWidget {
             barRods: [
               BarChartRodData(
                 toY: 40,
-                color: Colors.blue[700],
-                width: 15,
-                borderRadius: BorderRadius.circular(4),
+                color: Colors.blue,
+                width: 12,
+                borderRadius: BorderRadius.circular(2),
               ),
             ],
           ),
@@ -637,9 +493,9 @@ class _WeeklyActivityChart extends StatelessWidget {
             barRods: [
               BarChartRodData(
                 toY: 55,
-                color: Colors.blue[700],
-                width: 15,
-                borderRadius: BorderRadius.circular(4),
+                color: Colors.blue,
+                width: 12,
+                borderRadius: BorderRadius.circular(2),
               ),
             ],
           ),
@@ -665,46 +521,37 @@ class _StatGridItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-        border: Border.all(color: color.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.08)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withOpacity(0.08),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(icon, color: color, size: 18),
           ),
+          const SizedBox(width: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: color,
                 ),
               ),
-              const SizedBox(height: 4),
               Text(
                 title,
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
             ],
           ),
@@ -732,30 +579,24 @@ class _ActivityItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.blue.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withOpacity(0.08)),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withOpacity(0.08),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(icon, color: color, size: 18),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -763,77 +604,23 @@ class _ActivityItem extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
           ),
-          Text(time, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          Text(time, style: const TextStyle(fontSize: 10, color: Colors.grey)),
         ],
       ),
     );
   }
 }
 
-class _BottomNavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _BottomNavItem({
-    required this.icon,
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 5,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 24,
-              color: isSelected ? Colors.purple : Colors.blue[700],
-            ),
-            if (isSelected)
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: Colors.purple,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// Moved to widgets/app_bottom_nav.dart as BottomNavItem.
