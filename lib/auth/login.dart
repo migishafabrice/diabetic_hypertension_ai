@@ -1,8 +1,14 @@
+import 'package:bcrypt/bcrypt.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:healthapp/database/userManage.dart';
+import 'package:healthapp/widgets/components.dart';
 
 class Login extends StatelessWidget {
-  const Login({super.key});
-
+  Login({super.key});
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,27 +27,29 @@ class Login extends StatelessWidget {
           // Background image
           Container(
             width: double.infinity,
-            height: 380,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/auth/login_background.png'),
-                fit: BoxFit.fill,
+            height: 180,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color.fromARGB(255, 136, 194, 241), Colors.white],
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
               ),
             ),
+            child: Icon(Icons.login, size: 50, color: Colors.white),
           ),
           // Purple container
           Positioned(
-            top: 350,
+            top: 150,
             child: Container(
               width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height - 350,
+              height: MediaQuery.of(context).size.height - 150,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Color.fromARGB(255, 136, 194, 241), Colors.white],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                border: Border.all(color: Colors.white, width: 2),
+
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20),
                   topRight: Radius.circular(20),
@@ -67,42 +75,49 @@ class Login extends StatelessWidget {
                       style: TextStyle(fontSize: 16, color: Colors.black),
                     ),
                   ),
-                  Column(
-                    children: [
-                      SizedBox(height: 20),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 40),
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Enter  your Username',
-                            prefixIcon: Icon(Icons.person),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        SizedBox(height: 20),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 40),
+                          child: TextFormField(
+                            controller: _usernameController,
+                            decoration: InputDecoration(
+                              labelText: 'Enter  your Username',
+                              prefixIcon: Icon(Icons.person),
                             ),
+                            validator: (value) =>
+                                (value == null || value.isEmpty)
+                                ? 'Please enter your username'
+                                : null,
                           ),
                         ),
-                      ),
-                      SizedBox(height: 10),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 40),
-                        child: Column(
-                          children: [
-                            SizedBox(height: 10),
-                            TextField(
-                              obscureText: true,
-                              decoration: InputDecoration(
-                                hintText: 'Enter your Password',
-                                prefixIcon: Icon(Icons.lock),
-                                suffixIcon: Icon(Icons.visibility),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                        SizedBox(height: 10),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 40),
+                          child: Column(
+                            children: [
+                              SizedBox(height: 10),
+                              TextFormField(
+                                controller: _passwordController,
+                                obscureText: true,
+                                decoration: InputDecoration(
+                                  labelText: 'Enter your Password',
+                                  prefixIcon: Icon(Icons.lock),
+                                  suffixIcon: Icon(Icons.visibility),
                                 ),
+                                validator: (value) =>
+                                    value == null || value.isEmpty
+                                    ? 'Please enter your password'
+                                    : null,
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   SizedBox(height: 10),
                   Row(
@@ -135,8 +150,35 @@ class Login extends StatelessWidget {
                   ),
                   SizedBox(height: 5),
                   ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/Dashboard');
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        Map<String, dynamic>? user =
+                            await Usermanage.authenticateUser(
+                              _usernameController.text,
+                              _passwordController.text,
+                            );
+                        if (user != null) {
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/Dashboard',
+                            arguments: {
+                              'id': user['id'],
+                              'username': user['username'],
+                              'nickname': user['nickname'],
+                              'function': user['function'],
+                              'address': user['address'],
+                              'dob': user['dob'],
+                            },
+                          );
+                        } else {
+                          Components.showErrorSnackBar(
+                            context,
+                            'Invalid username or password',
+                            Icons.error,
+                            Colors.red,
+                          );
+                        }
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue[700],
@@ -148,9 +190,10 @@ class Login extends StatelessWidget {
                         borderRadius: BorderRadius.circular(30),
                       ),
                     ),
-                    child: Text(
-                      'Sign In',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    child: Icon(
+                      CupertinoIcons.arrow_right_circle,
+                      size: 30,
+                      color: Colors.white,
                     ),
                   ),
                   SizedBox(height: 20),
@@ -222,7 +265,7 @@ class Login extends StatelessWidget {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.pushReplacementNamed(context, '/Regsiter');
+                          Navigator.pushReplacementNamed(context, '/Register');
                         },
                         child: Text(
                           'Sign Up',

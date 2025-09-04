@@ -1,8 +1,20 @@
+import 'package:bcrypt/bcrypt.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+import 'package:healthapp/database/userManage.dart';
+import 'package:healthapp/widgets/components.dart';
+import 'package:healthapp/widgets/datePicker.dart';
 
 class Register extends StatelessWidget {
-  const Register({super.key});
+  Register({super.key});
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _rPasswordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _functionController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -22,17 +34,13 @@ class Register extends StatelessWidget {
           // Background image
           Container(
             width: double.infinity,
-            height: 240,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/auth/login_background.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
+            height: 200,
+            decoration: BoxDecoration(),
+            child: Icon(Icons.add_alert, size: 50, color: Colors.white),
           ),
           // Purple container
           Positioned(
-            top: 210,
+            top: 150,
             child: Container(
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height - 210,
@@ -42,7 +50,7 @@ class Register extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                border: Border.all(color: Colors.white, width: 2),
+
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20),
                   topRight: Radius.circular(20),
@@ -71,131 +79,190 @@ class Register extends StatelessWidget {
                         style: TextStyle(fontSize: 16, color: Colors.black),
                       ),
                     ),
-                    Column(
-                      children: [
-                        SizedBox(height: 10),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: 'Enter  your Names',
-                              prefixIcon: Icon(Icons.person_add),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          SizedBox(height: 10),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: TextFormField(
+                              controller: _nameController,
+                              decoration: InputDecoration(
+                                labelText: 'Enter  your Alias Name',
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your alias name';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: TextFormField(
+                              controller: _emailController,
+                              decoration: InputDecoration(
+                                labelText: 'Enter  your Email',
+                              ),
+                              validator: (value) =>
+                                  (value == null || value.isEmpty)
+                                  ? 'Please enter your Email'
+                                  : null,
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: TextFormField(
+                              controller: _functionController,
+                              decoration: InputDecoration(
+                                labelText: 'Enter  your Function',
+                              ),
+                              validator: (value) =>
+                                  value == null || value.isEmpty
+                                  ? 'Please enter your function'
+                                  : null,
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: TextFormField(
+                              controller: _addressController,
+                              decoration: InputDecoration(
+                                labelText: 'Enter  your Address',
                               ),
                             ),
                           ),
-                        ),
-                        SizedBox(height: 10),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: 'Enter  your Email',
-                              prefixIcon: Icon(Icons.email),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
+                          SizedBox(height: 10),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: TextFormField(
+                              controller: _dateController,
+                              onTap: () => Datepicker.selectDate(
+                                context,
+                                _dateController,
                               ),
+                              decoration: InputDecoration(
+                                labelText: 'Enter  your Date of Birth',
+                              ),
+                              validator: (value) =>
+                                  value == null || value.isEmpty
+                                  ? 'Please enter your date of birth'
+                                  : null,
                             ),
                           ),
-                        ),
-                        SizedBox(height: 10),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: 'Enter  your Function',
-                              prefixIcon: Icon(Icons.work),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: 'Enter  your Address',
-                              prefixIcon: Icon(Icons.location_city),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: 'Enter  your telephone number',
-                              prefixIcon: Icon(Icons.phone),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
-                          child: Column(
-                            children: [
-                              TextField(
-                                obscureText: true,
-                                decoration: InputDecoration(
-                                  hintText: 'Enter your Password',
-                                  prefixIcon: Icon(Icons.lock),
-                                  suffixIcon: Icon(Icons.visibility),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                          SizedBox(height: 10),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: Column(
+                              children: [
+                                TextFormField(
+                                  controller: _passwordController,
+                                  obscureText: true,
+                                  decoration: InputDecoration(
+                                    labelText: 'Enter your Password',
+
+                                    suffixIcon: Icon(Icons.visibility),
                                   ),
+                                  validator: (value) =>
+                                      value == null || value.isEmpty
+                                      ? 'Please enter your password'
+                                      : null,
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 10),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
-                          child: Column(
-                            children: [
-                              TextField(
-                                obscureText: true,
-                                decoration: InputDecoration(
-                                  hintText: 'Re-type your Password',
-                                  prefixIcon: Icon(Icons.lock),
-                                  suffixIcon: Icon(Icons.visibility),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                          SizedBox(height: 10),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: Column(
+                              children: [
+                                TextFormField(
+                                  controller: _rPasswordController,
+                                  obscureText: true,
+                                  decoration: InputDecoration(
+                                    labelText: 'Re-type your Password',
+
+                                    suffixIcon: Icon(Icons.visibility),
                                   ),
+                                  validator: (value) =>
+                                      value == null ||
+                                          value.isEmpty ||
+                                          _passwordController.text !=
+                                              _rPasswordController.text
+                                      ? 'Passwords do not match'
+                                      : null,
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Navigate to Register screen
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue[700],
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 50,
-                          vertical: 15,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: Text(
-                        'Sign Up',
-                        style: TextStyle(fontSize: 18, color: Colors.white),
+                          SizedBox(height: 10),
+                          ElevatedButton(
+                            onPressed: () async {
+                              if (_formKey.currentState!.validate()) {
+                                String hashedPassword = hashPassword(
+                                  _passwordController.text,
+                                );
+                                print('HashedPassword:$hashedPassword');
+                                final UserModel user = UserModel(
+                                  username: _emailController.text,
+                                  password: hashedPassword,
+                                  nickname: _nameController.text,
+                                  function: _functionController.text,
+                                  address: _addressController.text,
+                                  birthdate: _dateController.text,
+                                  createdAt: DateTime.now().toIso8601String(),
+                                );
+                                int id = await Usermanage.createUser(user);
+                                if (id > 0) {
+                                  Components.showErrorSnackBar(
+                                    context,
+                                    'You are registered successfully! Login now.',
+                                    Icons.check_circle,
+                                    Colors.green,
+                                  );
+                                  Navigator.pushReplacementNamed(
+                                    context,
+                                    '/Login',
+                                  );
+                                } else {
+                                  Components.showErrorSnackBar(
+                                    context,
+                                    'Error registering user!',
+                                    Icons.error,
+                                    Colors.red,
+                                  );
+                                }
+                              } else {
+                                Components.showErrorSnackBar(
+                                  context,
+                                  'Please fix the errors in red',
+                                  Icons.error,
+                                  Colors.red,
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue[700],
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 50,
+                                vertical: 15,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: Icon(
+                              CupertinoIcons.square_arrow_down,
+                              size: 30,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
 
@@ -229,5 +296,10 @@ class Register extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String hashPassword(String plainTextPassword) {
+    final salt = BCrypt.gensalt(logRounds: 12);
+    return BCrypt.hashpw(plainTextPassword, salt);
   }
 }

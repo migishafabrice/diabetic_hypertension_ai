@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 
 class Splashscreen extends StatefulWidget {
   const Splashscreen({super.key});
@@ -181,15 +180,7 @@ class WelcomePage extends StatelessWidget {
                     'Your journey to better health starts here.',
                     style: TextStyle(color: Colors.black, fontSize: 16),
                   ),
-                  // SizedBox(height: 10),
-                  Lottie.asset(
-                    'assets/lotties/Happy_Face_Loading.json',
-                    width: 120,
-                    height: 120,
-                    fit: BoxFit.fill,
-                    repeat: true,
-                  ),
-                  // SizedBox(height: 10),
+
                   Text(
                     'Track your fitness, monitor your diet, \n and achieve your goals with us!',
                     style: TextStyle(color: Colors.black, fontSize: 16),
@@ -225,15 +216,15 @@ class WelcomePage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Already have an account?',
+                        'Don\'t  have an account?',
                         style: TextStyle(color: Colors.black, fontSize: 14),
                       ),
                       TextButton(
                         onPressed: () {
-                          // Navigate to login screen
+                          Navigator.pushReplacementNamed(context, '/Register');
                         },
                         child: Text(
-                          'Sign In',
+                          'Sign Up',
                           style: TextStyle(
                             color: Colors.blue[700],
                             fontSize: 14,

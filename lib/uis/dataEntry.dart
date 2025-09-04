@@ -438,11 +438,7 @@ class CommonHistory extends StatelessWidget {
                 radius: 24,
                 backgroundColor: Colors.blue[700]!.withOpacity(0.1),
                 child: IconButton(
-                  icon: Icon(
-                    Icons.arrow_left,
-                    color: Colors.blue[700],
-                    size: 20,
-                  ),
+                  icon: Icon(Icons.person, color: Colors.blue[700], size: 20),
                   onPressed: () {},
                 ),
               ),
@@ -457,7 +453,7 @@ class CommonHistory extends StatelessWidget {
               CircleAvatar(
                 radius: 24,
                 backgroundColor: Colors.blue[700]!.withOpacity(0.1),
-                child: Icon(Icons.person, color: Colors.blue[700], size: 20),
+                child: Icon(Icons.logout, color: Colors.blue[700], size: 20),
               ),
             ],
           ),

@@ -1,11 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:healthapp/uis/dataEntry.dart';
 import 'package:healthapp/widgets/app_bottom_nav.dart';
 
 class Dashboard extends StatefulWidget {
-  const Dashboard({super.key});
-
+  final Map<String, dynamic> userData;
+  const Dashboard({super.key, required this.userData});
   @override
   State<Dashboard> createState() => _DashboardState();
 }
@@ -23,74 +24,86 @@ class _DashboardState extends State<Dashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 80),
-                child: Column(
-                  children: [
-                    _buildHealthOverview(),
-                    _buildChartsSection(),
-                    _buildStatsGrid(),
-                    _buildRecentActivities(),
-                    const SizedBox(height: 20),
-                  ],
-                ),
+      body: Column(
+        children: [
+          CommonHistory(nameOfPage: 'Dashboard'),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 80),
+              child: Column(
+                children: [
+                  _buildHealthOverview(),
+                  _buildChartsSection(),
+                  _buildStatsGrid(),
+                  _buildRecentActivities(),
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
-            AppBottomNavigationBar(
-              selectedIndex: _selectedIndex,
-              onTap: (index) {
-                _onItemTapped(index);
-                // Example navigation: match previous logic
-                if (index == 0) {
-                  Navigator.pushReplacementNamed(context, '/Dashboard');
-                }
-                if (index == 1) {
-                  Navigator.pushReplacementNamed(
-                    context,
-                    '/BloodPressureEntry',
-                  );
-                }
-                if (index == 2) {
-                  Navigator.pushReplacementNamed(context, '/BloodSugarEntry');
-                }
-                if (index == 3) {
-                  Navigator.pushReplacementNamed(context, '/FoodIntakeEntry');
-                }
-                if (index == 4) {
-                  Navigator.pushReplacementNamed(context, '/ActivityEntry');
-                }
-                if (index == 5) {
-                  Navigator.pushReplacementNamed(context, '/MedicationEntry');
-                }
-                if (index == 6) {
-                  Navigator.pushReplacementNamed(context, '/Reports');
-                } // Add other navigation as needed.
-              },
-            ),
-          ],
-        ),
+          ),
+          AppBottomNavigationBar(
+            selectedIndex: _selectedIndex,
+            onTap: (index) {
+              _onItemTapped(index);
+              // Example navigation: match previous logic
+              if (index == 0) {
+                Navigator.pushReplacementNamed(context, '/Dashboard');
+              }
+              if (index == 1) {
+                Navigator.pushReplacementNamed(context, '/BloodPressureEntry');
+              }
+              if (index == 2) {
+                Navigator.pushReplacementNamed(context, '/BloodSugarEntry');
+              }
+              if (index == 3) {
+                Navigator.pushReplacementNamed(context, '/FoodIntakeEntry');
+              }
+              if (index == 4) {
+                Navigator.pushReplacementNamed(context, '/ActivityEntry');
+              }
+              if (index == 5) {
+                Navigator.pushReplacementNamed(context, '/MedicationEntry');
+              }
+              if (index == 6) {
+                Navigator.pushReplacementNamed(context, '/Reports');
+              } // Add other navigation as needed.
+            },
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+    return Container(
+      padding: const EdgeInsets.only(top: 60, left: 20, right: 20, bottom: 30),
+      width: MediaQuery.of(context).size.width,
+      height: 150,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.white, Color.fromARGB(255, 136, 194, 241)],
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new,
-              color: Colors.blue,
-              size: 20,
-            ),
-            onPressed: () {},
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: Colors.blue,
+            child: Icon(Icons.person, color: Colors.white, size: 20),
           ),
           const Text(
             'Dashboard',
@@ -100,10 +113,10 @@ class _DashboardState extends State<Dashboard> {
               color: Colors.black87,
             ),
           ),
-          const CircleAvatar(
+          CircleAvatar(
             radius: 20,
             backgroundColor: Colors.blue,
-            child: Icon(Icons.person, color: Colors.white, size: 20),
+            child: Icon(Icons.logout, color: Colors.white, size: 20),
           ),
         ],
       ),
@@ -391,8 +404,10 @@ class _WeeklyActivityChart extends StatelessWidget {
                     break;
                 }
                 return SideTitleWidget(
+                  fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
+                  key: ValueKey(meta),
+                  space: 8,
                   axisSide: meta.axisSide,
-                  space: 4,
                   child: Text(text, style: style),
                 );
               },
@@ -406,8 +421,10 @@ class _WeeklyActivityChart extends StatelessWidget {
                   return Container();
                 }
                 return SideTitleWidget(
+                  key: ValueKey(meta),
+                  fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
+                  space: 8,
                   axisSide: meta.axisSide,
-                  space: 4,
                   child: Text(
                     '${value.toInt()}',
                     style: const TextStyle(color: Colors.grey, fontSize: 12),

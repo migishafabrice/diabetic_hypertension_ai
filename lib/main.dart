@@ -4,8 +4,10 @@ import 'package:healthapp/auth/register.dart';
 import 'package:healthapp/splashScreen.dart';
 import 'package:healthapp/uis/dashboard.dart';
 import 'package:healthapp/uis/dataEntry.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -18,9 +20,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       routes: {
-        '/Login': (context) => const Login(),
-        '/Regsiter': (context) => const Register(),
-        '/Dashboard': (context) => const Dashboard(),
+        '/Login': (context) => Login(),
+        '/Register': (context) => Register(),
+        '/Dashboard': (context) => const Dashboard(userData: {}),
         '/BloodPressureEntry': (context) => BloodPressureEntry(),
         '/BloodSugarEntry': (context) => BloodSugarEntry(),
         '/ActivityEntry': (context) => PhysicalExerciseEntry(),
