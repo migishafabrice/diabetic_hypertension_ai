@@ -1,15 +1,82 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:healthapp/provider/authProvider.dart';
+import 'package:healthapp/provider/bloodpressureProvider.dart';
 import 'package:healthapp/widgets/app_bottom_nav.dart';
+import 'package:healthapp/widgets/components.dart';
+import 'package:healthapp/widgets/datePicker.dart';
+import 'package:intl/intl.dart';
 
-class BloodPressureEntry extends StatefulWidget {
+class BloodPressureEntry extends ConsumerStatefulWidget {
   const BloodPressureEntry({super.key});
 
   @override
-  State<BloodPressureEntry> createState() => _BloodPressureEntryState();
+  ConsumerState<BloodPressureEntry> createState() => _BloodPressureEntryState();
 }
 
-class _BloodPressureEntryState extends State<BloodPressureEntry> {
+class _BloodPressureEntryState extends ConsumerState<BloodPressureEntry> {
   int _selectedIndex = 1; // Health tab as active by default
+  final TextEditingController _systolicController = TextEditingController();
+  final TextEditingController _diastolicController = TextEditingController();
+  final TextEditingController _pulseController = TextEditingController();
+  final TextEditingController _noteController = TextEditingController();
+  TextEditingController _dateController = TextEditingController();
+  TextEditingController _timeController = TextEditingController();
+  final _keyFormState = GlobalKey<FormState>();
+  bool _isLoading = false;
+  @override
+  void initState() {
+    super.initState();
+    // Load data when screen is first opened
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadBloodPressureData();
+    });
+  }
+
+  Future<void> _deleteBloodPressureEntry(int entryId) async {
+    try {
+      setState(() => _isLoading = true);
+      await ref
+          .read(bloodPressureProvider.notifier)
+          .deleteBloodPressureEntry(entryId);
+      Components.showErrorSnackBar(
+        context,
+        'Blood Pressure Entry Deleted Successfully',
+        Icons.check_circle,
+        Colors.green,
+      );
+    } catch (e) {
+      Components.showErrorSnackBar(
+        context,
+        'Failed to delete entry: $e',
+        Icons.error,
+        Colors.red,
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadBloodPressureData() async {
+    final user = ref.read(authProvider);
+    if (user != null) {
+      setState(() => _isLoading = true);
+      try {
+        await ref
+            .read(bloodPressureProvider.notifier)
+            .getBloodPressureEntries(user.id);
+      } catch (e) {
+        Components.showErrorSnackBar(
+          context,
+          'Failed to load data: $e',
+          Icons.error,
+          Colors.red,
+        );
+      } finally {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   void _onTabTapped(int index) {
     setState(() {
@@ -40,15 +107,21 @@ class _BloodPressureEntryState extends State<BloodPressureEntry> {
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(authProvider);
+    final records = ref.watch(bloodPressureProvider);
+    _dateController.text = DateTime.now().toLocal().toString().split(' ')[0];
+    TimeOfDay currentTime = TimeOfDay.now();
+    _timeController.text = currentTime.format(context);
     return Scaffold(
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CommonHistory(nameOfPage: 'Blood Pressure'),
+          CommonHistory(nameOfPage: 'Blood Pressure', userData: {}),
           Container(
             width: MediaQuery.sizeOf(context).width,
             padding: EdgeInsets.only(left: 20, right: 20),
             child: Form(
+              key: _keyFormState,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -66,6 +139,7 @@ class _BloodPressureEntryState extends State<BloodPressureEntry> {
                     children: [
                       Expanded(
                         child: TextFormField(
+                          controller: _systolicController,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -77,11 +151,20 @@ class _BloodPressureEntryState extends State<BloodPressureEntry> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          validator: (value) {
+                            if (value == null ||
+                                value.isEmpty ||
+                                int.tryParse(value) == null) {
+                              return 'Systolic must be a valid integer';
+                            }
+                            // Valid
+                          },
                         ),
                       ),
                       SizedBox(width: 10),
                       Expanded(
                         child: TextFormField(
+                          controller: _diastolicController,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -93,11 +176,20 @@ class _BloodPressureEntryState extends State<BloodPressureEntry> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          validator: (value) {
+                            if (value == null ||
+                                value.isEmpty ||
+                                int.tryParse(value) == null) {
+                              return 'Diastolic must be a valid integer';
+                            }
+                            // Valid
+                          },
                         ),
                       ),
                       SizedBox(width: 10),
                       Expanded(
                         child: TextFormField(
+                          controller: _pulseController,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -109,6 +201,14 @@ class _BloodPressureEntryState extends State<BloodPressureEntry> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          validator: (value) {
+                            if (value == null ||
+                                value.isEmpty ||
+                                int.tryParse(value) == null) {
+                              return 'Pulse must be a valid integer';
+                            }
+                            // Valid
+                          },
                         ),
                       ),
                     ],
@@ -116,21 +216,30 @@ class _BloodPressureEntryState extends State<BloodPressureEntry> {
 
                   SizedBox(height: 10),
                   TextFormField(
+                    controller: _noteController,
                     maxLines: null,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
-                      labelText: 'Notes',
+                      labelText: 'Note',
                       labelStyle: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Note must not be empty';
+                      }
+                    },
                   ),
                   SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
                         child: TextFormField(
+                          controller: _dateController,
+                          onTap: () =>
+                              Datepicker.selectDate(context, _dateController),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -147,6 +256,9 @@ class _BloodPressureEntryState extends State<BloodPressureEntry> {
                       SizedBox(width: 10),
                       Expanded(
                         child: TextFormField(
+                          controller: _timeController,
+                          onTap: () =>
+                              Datepicker.selectTime(context, _timeController),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -165,7 +277,75 @@ class _BloodPressureEntryState extends State<BloodPressureEntry> {
                   SizedBox(height: 20),
                   Center(
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () async {
+                        if (_keyFormState.currentState!.validate()) {
+                          int userId = user!.id;
+
+                          TimeOfDay parseTimeFromController() {
+                            if (_timeController.text.isEmpty ||
+                                !_timeController.text.contains(':')) {
+                              return TimeOfDay.now();
+                            }
+
+                            String timeString = _timeController.text.trim();
+
+                            try {
+                              // Parse AM/PM format
+                              final format = DateFormat(
+                                'h:mm a',
+                              ); // Handles "12:30 PM"
+                              final dateTime = format.parse(timeString);
+                              return TimeOfDay.fromDateTime(dateTime);
+                            } catch (e) {
+                              // Fallback to current time if parsing fails
+                              return TimeOfDay.now();
+                            }
+                          }
+
+                          NewBloodPressureEntry entry = NewBloodPressureEntry(
+                            userId: userId,
+                            systolic: int.parse(_systolicController.text),
+                            diastolic: int.parse(_diastolicController.text),
+                            pulse: int.parse(_pulseController.text),
+                            note: _noteController.text,
+                            entryDate: _dateController.text.isNotEmpty
+                                ? DateTime.parse(_dateController.text)
+                                : DateTime.now(),
+                            entryTime: parseTimeFromController(),
+                          );
+                          try {
+                            setState(() => _isLoading = true);
+                            await ref
+                                .read(bloodPressureProvider.notifier)
+                                .addBloodPressureEntry(entry);
+                            Components.showErrorSnackBar(
+                              context,
+                              'Blood Pressure Entry Added Successfully',
+                              Icons.check_circle,
+                              Colors.green,
+                            );
+
+                            _systolicController.clear();
+                            _diastolicController.clear();
+                            _pulseController.clear();
+                            _noteController.clear();
+                            _dateController.clear();
+                            _timeController.clear();
+                            await ref
+                                .read(bloodPressureProvider.notifier)
+                                .getBloodPressureEntries(userId);
+                          } catch (e) {
+                            Components.showErrorSnackBar(
+                              context,
+                              'Failed to add entry: $e',
+                              Icons.error,
+                              Colors.red,
+                            );
+                          } finally {
+                            setState(() => _isLoading = false);
+                          }
+                        }
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue[700],
                         foregroundColor: Colors.white,
@@ -186,6 +366,107 @@ class _BloodPressureEntryState extends State<BloodPressureEntry> {
                         ),
                       ),
                     ),
+                  ),
+                  SizedBox(height: 20),
+                  Divider(color: Colors.black, thickness: 1),
+                  Center(
+                    child: Text(
+                      'History of Blood Pressure records',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Divider(color: Colors.black, thickness: 1),
+                  // Replace the entire history section with this code
+                  // Replace the history section with this code
+                  SizedBox(
+                    width: MediaQuery.sizeOf(context).width,
+                    height:
+                        MediaQuery.of(context).size.height *
+                        0.3, // Fixed height constraint
+                    child: records.isEmpty
+                        ? _isLoading
+                              ? Center(child: CircularProgressIndicator())
+                              : Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(20),
+                                    child: Text(
+                                      'No blood pressure records found.',
+                                      style: TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                )
+                        : ListView.builder(
+                            padding: EdgeInsets.zero,
+                            itemCount: records.length,
+                            itemBuilder: (context, index) {
+                              final record = records[index];
+                              return Card(
+                                margin: EdgeInsets.symmetric(
+                                  vertical: 4,
+                                  horizontal: 8,
+                                ),
+                                child: ListTile(
+                                  trailing: SizedBox(
+                                    width: 40,
+                                    child: Container(
+                                      width: 40,
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Expanded(
+                                            child: IconButton(
+                                              onPressed: () {},
+                                              icon: Icon(
+                                                Icons.edit,
+                                                size: 25,
+                                                color: Colors.blue[700],
+                                              ),
+                                              padding: EdgeInsets.zero,
+                                              constraints: BoxConstraints(),
+                                            ),
+                                          ),
+                                          SizedBox(height: 20),
+                                          Expanded(
+                                            child: IconButton(
+                                              onPressed: () => {
+                                                _deleteBloodPressureEntry(
+                                                  record.id!,
+                                                ),
+                                              },
+                                              icon: Icon(
+                                                Icons.delete,
+                                                size: 25,
+                                                color: Colors.deepOrange,
+                                              ),
+                                              padding: EdgeInsets.zero,
+                                              constraints: BoxConstraints(),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    'BP: ${record.systolic}/${record.diastolic} mmHg\nPulse: ${record.pulse} bpm',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    'Note: ${record.note}\nDate: ${DateFormat('yyyy-MM-dd').format(record.entryDate)}       Time: ${record.entryTime.format(context)}',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),
@@ -209,8 +490,24 @@ class BloodSugarEntry extends StatefulWidget {
 }
 
 class _BloodSugarEntryState extends State<BloodSugarEntry> {
-  int _selectedIndex = 2; // Health tab as active by default
+  int _selectedIndex = 2;
+  final TextEditingController _levelController = TextEditingController();
+  final TextEditingController _noteController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _timeControlloer = TextEditingController();
+  String? _selectedValue;
+  String? _selectedTime;
 
+  final times = [
+    '---Select Time---',
+    'Before Breakfast',
+    'After Breakfast',
+    'Before Lunch',
+    'After Lunch',
+    'Before Dinner',
+    'After Dinner',
+    'Other',
+  ];
   void _onTabTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -243,7 +540,7 @@ class _BloodSugarEntryState extends State<BloodSugarEntry> {
     return Scaffold(
       body: Column(
         children: [
-          CommonHistory(nameOfPage: 'Blood Sugar'),
+          CommonHistory(nameOfPage: 'Blood Sugar', userData: {}),
           Container(
             width: MediaQuery.sizeOf(context).width,
             padding: EdgeInsets.only(left: 20, right: 20),
@@ -273,12 +570,16 @@ class _BloodSugarEntryState extends State<BloodSugarEntry> {
                           ),
                           leading: Radio(
                             value: 'Random',
-                            groupValue: null,
-                            onChanged: (value) {},
+                            groupValue: _selectedValue,
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedValue = value;
+                              });
+                            },
                           ),
                         ),
                       ),
-                      SizedBox(width: 10),
+
                       Expanded(
                         child: ListTile(
                           title: Text(
@@ -290,15 +591,48 @@ class _BloodSugarEntryState extends State<BloodSugarEntry> {
                           ),
                           leading: Radio(
                             value: 'H1Ac',
-                            groupValue: null,
-                            onChanged: (value) {},
+                            groupValue: _selectedValue,
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedValue = value;
+                              });
+                            },
                           ),
                         ),
                       ),
                     ],
                   ),
+                  if (_selectedValue == "Random")
+                    DropdownButtonFormField<String>(
+                      menuMaxHeight: 200,
+                      isDense: true,
+                      alignment: Alignment.centerLeft,
 
-                  SizedBox(height: 10),
+                      value: _selectedTime,
+
+                      items: times
+                          .map(
+                            (e) => DropdownMenuItem(value: e, child: Text(e)),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedTime = value;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        labelText: 'Time',
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 5,
+                        ),
+                        labelStyle: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+
                   TextFormField(
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
@@ -397,11 +731,13 @@ class _BloodSugarEntryState extends State<BloodSugarEntry> {
   }
 }
 
-class CommonHistory extends StatelessWidget {
+class CommonHistory extends ConsumerWidget {
   final String nameOfPage;
-  const CommonHistory({super.key, required this.nameOfPage});
+  final Map<String, dynamic> userData;
+  const CommonHistory({required this.nameOfPage, required this.userData});
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authProvider);
     return Column(
       children: [
         Container(
@@ -439,7 +775,48 @@ class CommonHistory extends StatelessWidget {
                 backgroundColor: Colors.blue[700]!.withOpacity(0.1),
                 child: IconButton(
                   icon: Icon(Icons.person, color: Colors.blue[700], size: 20),
-                  onPressed: () {},
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text(user!.nickname),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Divider(color: Colors.black),
+                              SizedBox(height: 8),
+                              Text('Username: ${user.username}'),
+                              SizedBox(height: 8),
+                              Text('Function: ${user.function}'),
+                              SizedBox(height: 8),
+                              Text('Address: ${user.address}'),
+                              SizedBox(height: 8),
+                              Text(
+                                'Birthdate: ${user.birthdate.toLocal().toString().split(' ')[0]}',
+                              ),
+                            ],
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: Text(
+                                'Close',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
               Text(
@@ -453,7 +830,13 @@ class CommonHistory extends StatelessWidget {
               CircleAvatar(
                 radius: 24,
                 backgroundColor: Colors.blue[700]!.withOpacity(0.1),
-                child: Icon(Icons.logout, color: Colors.blue[700], size: 20),
+                child: IconButton(
+                  icon: Icon(Icons.logout, color: Colors.blue[700], size: 20),
+                  onPressed: () {
+                    ref.read(authProvider.notifier).logout();
+                    Navigator.pushReplacementNamed(context, '/Login');
+                  },
+                ),
               ),
             ],
           ),
@@ -468,44 +851,6 @@ class CommonHistory extends StatelessWidget {
         //   ],
         // ),
       ],
-    );
-  }
-
-  Widget _buildCard(
-    BuildContext context,
-    String title,
-    String value,
-    Color color,
-  ) {
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.3,
-      height: 100,
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          SizedBox(height: 5),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -553,7 +898,7 @@ class _MedicationEntryState extends State<MedicationEntry> {
     return Scaffold(
       body: Column(
         children: [
-          CommonHistory(nameOfPage: 'Medication'),
+          CommonHistory(nameOfPage: 'Medication', userData: {}),
           Container(
             width: MediaQuery.sizeOf(context).width,
             padding: EdgeInsets.only(left: 20, right: 20),
@@ -748,7 +1093,7 @@ class _PhysicalExerciseEntryState extends State<PhysicalExerciseEntry> {
     return Scaffold(
       body: Column(
         children: [
-          CommonHistory(nameOfPage: 'Physical Exercise'),
+          CommonHistory(nameOfPage: 'Physical Exercise', userData: {}),
           Container(
             width: MediaQuery.sizeOf(context).width,
             padding: EdgeInsets.only(left: 20, right: 20),
@@ -980,7 +1325,7 @@ class _FoodIntakeEntryState extends State<FoodIntakeEntry> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            CommonHistory(nameOfPage: 'Food Intake'),
+            CommonHistory(nameOfPage: 'Food Intake', userData: {}),
             Container(
               width: MediaQuery.sizeOf(context).width,
               padding: const EdgeInsets.symmetric(horizontal: 20),

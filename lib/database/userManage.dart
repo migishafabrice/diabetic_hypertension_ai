@@ -37,48 +37,6 @@ class Usermanage {
       rethrow;
     }
   }
-
-  static Future<Map<String, dynamic>?> authenticateUser(
-    String username,
-    String password,
-  ) async {
-    try {
-      Connection? con = await DatabaseService().openConnection();
-      if (con != null) {
-        final result = await con.execute(
-          Sql.named(
-            'SELECT * FROM health_db.profiles WHERE username = @username',
-          ),
-          parameters: {'username': username},
-        );
-
-        if (result.isNotEmpty) {
-          final row = result[0];
-          if (verifyPassword(password, row[5] as String)) {
-            final row = result[0];
-            return {
-              'id': row[0],
-              'username': row[1],
-              'nickname': row[2],
-              'function': row[4],
-              'address': row[5],
-              'dob': row[6],
-            };
-          }
-        } else {
-          return null;
-        }
-      } else {
-        throw Exception('Database connection failed');
-      }
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  static bool verifyPassword(String plainTextPassword, String hashedPassword) {
-    return BCrypt.checkpw(plainTextPassword, hashedPassword);
-  }
 }
 
 class UserModel {

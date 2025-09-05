@@ -26,7 +26,7 @@ class _DashboardState extends State<Dashboard> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          CommonHistory(nameOfPage: 'Dashboard'),
+          CommonHistory(nameOfPage: 'Dashboard', userData: widget.userData),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.only(bottom: 80),
@@ -68,55 +68,6 @@ class _DashboardState extends State<Dashboard> {
                 Navigator.pushReplacementNamed(context, '/Reports');
               } // Add other navigation as needed.
             },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(top: 60, left: 20, right: 20, bottom: 30),
-      width: MediaQuery.of(context).size.width,
-      height: 150,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.white, Color.fromARGB(255, 136, 194, 241)],
-        ),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.blue.withOpacity(0.2),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: Colors.blue,
-            child: Icon(Icons.person, color: Colors.white, size: 20),
-          ),
-          const Text(
-            'Dashboard',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: Colors.blue,
-            child: Icon(Icons.logout, color: Colors.white, size: 20),
           ),
         ],
       ),

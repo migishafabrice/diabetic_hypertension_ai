@@ -1,16 +1,16 @@
-import 'package:bcrypt/bcrypt.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:healthapp/database/userManage.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:healthapp/provider/authProvider.dart';
 import 'package:healthapp/widgets/components.dart';
 
-class Login extends StatelessWidget {
+class Login extends ConsumerWidget {
   Login({super.key});
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: Stack(
         children: [
@@ -152,28 +152,30 @@ class Login extends StatelessWidget {
                   ElevatedButton(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        Map<String, dynamic>? user =
-                            await Usermanage.authenticateUser(
-                              _usernameController.text,
-                              _passwordController.text,
+                        try {
+                          await ref
+                              .read(authProvider.notifier)
+                              .authenticateUser(
+                                _usernameController.text,
+                                _passwordController.text,
+                              );
+                          if (ref.read(authProvider.notifier).isAuthenticated) {
+                            Navigator.pushReplacementNamed(
+                              context,
+                              '/Dashboard',
                             );
-                        if (user != null) {
-                          Navigator.pushReplacementNamed(
-                            context,
-                            '/Dashboard',
-                            arguments: {
-                              'id': user['id'],
-                              'username': user['username'],
-                              'nickname': user['nickname'],
-                              'function': user['function'],
-                              'address': user['address'],
-                              'dob': user['dob'],
-                            },
-                          );
-                        } else {
+                          } else {
+                            Components.showErrorSnackBar(
+                              context,
+                              'Invalid username or password',
+                              Icons.error,
+                              Colors.red,
+                            );
+                          }
+                        } catch (e) {
                           Components.showErrorSnackBar(
                             context,
-                            'Invalid username or password',
+                            e.toString(),
                             Icons.error,
                             Colors.red,
                           );
