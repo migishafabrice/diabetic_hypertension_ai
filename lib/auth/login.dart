@@ -35,7 +35,7 @@ class Login extends ConsumerWidget {
                 end: Alignment.bottomLeft,
               ),
             ),
-            child: Icon(Icons.login, size: 50, color: Colors.white),
+            child: Icon(Icons.login, size: 50, color: Colors.black),
           ),
           // Purple container
           Positioned(

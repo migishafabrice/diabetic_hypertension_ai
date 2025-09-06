@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healthapp/provider/authProvider.dart';
+import 'package:healthapp/provider/bloodSugarProvider.dart';
 import 'package:healthapp/provider/bloodpressureProvider.dart';
 import 'package:healthapp/widgets/app_bottom_nav.dart';
 import 'package:healthapp/widgets/components.dart';
@@ -82,27 +83,7 @@ class _BloodPressureEntryState extends ConsumerState<BloodPressureEntry> {
     setState(() {
       _selectedIndex = index;
     });
-    if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/Dashboard');
-    }
-    if (index == 1) {
-      Navigator.pushReplacementNamed(context, '/BloodPressureEntry');
-    }
-    if (index == 2) {
-      Navigator.pushReplacementNamed(context, '/BloodSugarEntry');
-    }
-    if (index == 3) {
-      Navigator.pushReplacementNamed(context, '/FoodIntakeEntry');
-    }
-    if (index == 4) {
-      Navigator.pushReplacementNamed(context, '/ActivityEntry');
-    }
-    if (index == 5) {
-      Navigator.pushReplacementNamed(context, '/MedicationEntry');
-    }
-    if (index == 6) {
-      Navigator.pushReplacementNamed(context, '/Reports');
-    }
+    Components.dashboardWidget(context, index);
   }
 
   @override
@@ -482,22 +463,24 @@ class _BloodPressureEntryState extends ConsumerState<BloodPressureEntry> {
   }
 }
 
-class BloodSugarEntry extends StatefulWidget {
+class BloodSugarEntry extends ConsumerStatefulWidget {
   const BloodSugarEntry({super.key});
 
   @override
-  State<BloodSugarEntry> createState() => _BloodSugarEntryState();
+  ConsumerState<BloodSugarEntry> createState() => _BloodSugarEntryState(); // This line is causing the error
 }
 
-class _BloodSugarEntryState extends State<BloodSugarEntry> {
+class _BloodSugarEntryState extends ConsumerState<BloodSugarEntry> {
   int _selectedIndex = 2;
   final TextEditingController _levelController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
-  final TextEditingController _timeControlloer = TextEditingController();
+  final TextEditingController _timeController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   String? _selectedValue;
   String? _selectedTime;
-
+  String? _selectedUnit;
+  bool _isLoading = false;
   final times = [
     '---Select Time---',
     'Before Breakfast',
@@ -508,35 +491,74 @@ class _BloodSugarEntryState extends State<BloodSugarEntry> {
     'After Dinner',
     'Other',
   ];
+  @override
+  void initState() {
+    super.initState();
+    // Load data when screen is first opened
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadBloodSugarData();
+    });
+  }
+
   void _onTabTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
-    if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/Dashboard');
+    Components.dashboardWidget(context, index);
+  }
+
+  Future<void> _loadBloodSugarData() async {
+    final user = ref.read(authProvider);
+    if (user != null) {
+      setState(() => _isLoading = true);
+      try {
+        await ref
+            .read(bloodSugarProvider.notifier)
+            .getBloodSugarEntries(user.id);
+      } catch (e) {
+        Components.showErrorSnackBar(
+          context,
+          'Failed to load data: $e',
+          Icons.error,
+          Colors.red,
+        );
+      } finally {
+        setState(() => _isLoading = false);
+      }
     }
-    if (index == 1) {
-      Navigator.pushReplacementNamed(context, '/BloodPressureEntry');
-    }
-    if (index == 2) {
-      Navigator.pushReplacementNamed(context, '/BloodSugarEntry');
-    }
-    if (index == 3) {
-      Navigator.pushReplacementNamed(context, '/FoodIntakeEntry');
-    }
-    if (index == 4) {
-      Navigator.pushReplacementNamed(context, '/ActivityEntry');
-    }
-    if (index == 5) {
-      Navigator.pushReplacementNamed(context, '/MedicationEntry');
-    }
-    if (index == 6) {
-      Navigator.pushReplacementNamed(context, '/Reports');
+  }
+
+  Future<void> _deleteBloodSugarEntry(int entryId) async {
+    try {
+      setState(() => _isLoading = true);
+      await ref
+          .read(bloodSugarProvider.notifier)
+          .deleteBloodSugarEntry(entryId);
+      Components.showErrorSnackBar(
+        context,
+        'Blood Sugar Entry Deleted Successfully',
+        Icons.check_circle,
+        Colors.green,
+      );
+    } catch (e) {
+      Components.showErrorSnackBar(
+        context,
+        'Failed to delete entry: $e',
+        Icons.error,
+        Colors.red,
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(authProvider);
+    final records = ref.watch(bloodSugarProvider);
+    _dateController.text = DateTime.now().toLocal().toString().split(' ')[0];
+    TimeOfDay currentTime = TimeOfDay.now();
+    _timeController.text = currentTime.format(context);
     return Scaffold(
       body: Column(
         children: [
@@ -545,6 +567,7 @@ class _BloodSugarEntryState extends State<BloodSugarEntry> {
             width: MediaQuery.sizeOf(context).width,
             padding: EdgeInsets.only(left: 20, right: 20),
             child: Form(
+              key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -583,14 +606,14 @@ class _BloodSugarEntryState extends State<BloodSugarEntry> {
                       Expanded(
                         child: ListTile(
                           title: Text(
-                            'H1Ac',
+                            'H1AC',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           leading: Radio(
-                            value: 'H1Ac',
+                            value: 'H1AC',
                             groupValue: _selectedValue,
                             onChanged: (value) {
                               setState(() {
@@ -602,7 +625,7 @@ class _BloodSugarEntryState extends State<BloodSugarEntry> {
                       ),
                     ],
                   ),
-                  if (_selectedValue == "Random")
+                  if (_selectedValue == "Random") ...[
                     DropdownButtonFormField<String>(
                       menuMaxHeight: 200,
                       isDense: true,
@@ -622,29 +645,78 @@ class _BloodSugarEntryState extends State<BloodSugarEntry> {
                       },
                       decoration: InputDecoration(
                         labelText: 'Time',
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 5,
-                        ),
                         labelStyle: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-
-                  TextFormField(
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    decoration: InputDecoration(
-                      labelText: 'Level',
-                      labelStyle: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                  ],
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedUnit,
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'mg/dL',
+                              child: Text('mg/dL'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'mmol/L',
+                              child: Text('mmol/L'),
+                            ),
+                          ],
+                          onChanged: (val) =>
+                              setState(() => _selectedUnit = val),
+                          decoration: InputDecoration(
+                            labelText: 'Unit',
+                            labelStyle: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      SizedBox(width: 20),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _levelController,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: 'Level',
+                            labelStyle: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          validator: (value) {
+                            if (_selectedValue == null) {
+                              return 'Please select type of measurement.';
+                            } else if (_selectedValue == "Random" &&
+                                (_selectedTime == null ||
+                                    _selectedTime == '---Select Time---')) {
+                              return 'Please select a time for Random measurement.';
+                            } else if (_selectedUnit == null) {
+                              return 'Please select a unit.';
+                            } else if (value == null || value.isEmpty) {
+                              return 'Level cannot be empty.';
+                            } else if (double.tryParse(value) == null) {
+                              return 'Level must be a valid number.';
+                            }
+
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                   SizedBox(height: 10),
                   TextFormField(
+                    controller: _noteController,
                     maxLines: null,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
@@ -654,12 +726,18 @@ class _BloodSugarEntryState extends State<BloodSugarEntry> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Note must not be empty'
+                        : null,
                   ),
                   SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
                         child: TextFormField(
+                          controller: _dateController,
+                          onTap: () =>
+                              Datepicker.selectDate(context, _dateController),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -676,6 +754,9 @@ class _BloodSugarEntryState extends State<BloodSugarEntry> {
                       SizedBox(width: 10),
                       Expanded(
                         child: TextFormField(
+                          controller: _timeController,
+                          onTap: () =>
+                              Datepicker.selectTime(context, _timeController),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -695,7 +776,38 @@ class _BloodSugarEntryState extends State<BloodSugarEntry> {
                   SizedBox(height: 20),
                   Center(
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          newBloodSugarEntry entry = newBloodSugarEntry(
+                            userId: user!.id,
+                            type: _selectedValue!,
+                            mealRelation: _selectedTime ?? 'Other',
+                            sugarLevel: double.parse(_levelController.text),
+                            note: _noteController.text,
+                            entryDate: _dateController.text.isNotEmpty
+                                ? DateTime.parse(_dateController.text)
+                                : DateTime.now(),
+                            entryTime: TimeOfDay.now(),
+                            unit: _selectedUnit!,
+                          );
+                          ref
+                              .read(bloodSugarProvider.notifier)
+                              .addBloodSugarEntry(entry);
+                          Components.showErrorSnackBar(
+                            context,
+                            'Blood Sugar Entry Added Successfully',
+                            Icons.check_circle,
+                            Colors.green,
+                          );
+                          _levelController.clear();
+                          _noteController.clear();
+                          _dateController.clear();
+                          _timeController.clear();
+                          _selectedTime = null;
+                          _selectedUnit = null;
+                          _selectedValue = null;
+                        }
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue[700],
                         foregroundColor: Colors.white,
@@ -716,6 +828,107 @@ class _BloodSugarEntryState extends State<BloodSugarEntry> {
                         ),
                       ),
                     ),
+                  ),
+                  SizedBox(height: 20),
+                  Divider(color: Colors.black, thickness: 1),
+                  Center(
+                    child: Text(
+                      'History of Blood Pressure records',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Divider(color: Colors.black, thickness: 1),
+                  // Replace the entire history section with this code
+                  // Replace the history section with this code
+                  SizedBox(
+                    width: MediaQuery.sizeOf(context).width,
+                    height:
+                        MediaQuery.of(context).size.height *
+                        0.3, // Fixed height constraint
+                    child: records.isEmpty
+                        ? _isLoading
+                              ? Center(child: CircularProgressIndicator())
+                              : Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(20),
+                                    child: Text(
+                                      'No blood pressure records found.',
+                                      style: TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                )
+                        : ListView.builder(
+                            padding: EdgeInsets.zero,
+                            itemCount: records.length,
+                            itemBuilder: (context, index) {
+                              final record = records[index];
+                              return Card(
+                                margin: EdgeInsets.symmetric(
+                                  vertical: 4,
+                                  horizontal: 8,
+                                ),
+                                child: ListTile(
+                                  trailing: SizedBox(
+                                    width: 40,
+                                    child: Container(
+                                      width: 40,
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Expanded(
+                                            child: IconButton(
+                                              onPressed: () {},
+                                              icon: Icon(
+                                                Icons.edit,
+                                                size: 25,
+                                                color: Colors.blue[700],
+                                              ),
+                                              padding: EdgeInsets.zero,
+                                              constraints: BoxConstraints(),
+                                            ),
+                                          ),
+                                          SizedBox(height: 20),
+                                          Expanded(
+                                            child: IconButton(
+                                              onPressed: () => {
+                                                _deleteBloodSugarEntry(
+                                                  record.id!,
+                                                ),
+                                              },
+                                              icon: Icon(
+                                                Icons.delete,
+                                                size: 25,
+                                                color: Colors.deepOrange,
+                                              ),
+                                              padding: EdgeInsets.zero,
+                                              constraints: BoxConstraints(),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    'Level: ${record.sugarLevel} ${record.unit}\nType: ${record.type} (${record.mealRelation})',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    'Note: ${record.note}\nDate: ${DateFormat('yyyy-MM-dd').format(record.entryDate)}       Time: ${record.entryTime.format(context)}',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),
@@ -870,27 +1083,7 @@ class _MedicationEntryState extends State<MedicationEntry> {
     setState(() {
       _selectedIndex = index;
     });
-    if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/Dashboard');
-    }
-    if (index == 1) {
-      Navigator.pushReplacementNamed(context, '/BloodPressureEntry');
-    }
-    if (index == 2) {
-      Navigator.pushReplacementNamed(context, '/BloodSugarEntry');
-    }
-    if (index == 3) {
-      Navigator.pushReplacementNamed(context, '/FoodIntakeEntry');
-    }
-    if (index == 4) {
-      Navigator.pushReplacementNamed(context, '/ActivityEntry');
-    }
-    if (index == 5) {
-      Navigator.pushReplacementNamed(context, '/MedicationEntry');
-    }
-    if (index == 6) {
-      Navigator.pushReplacementNamed(context, '/Reports');
-    }
+    Components.dashboardWidget(context, index);
   }
 
   @override
@@ -1064,28 +1257,7 @@ class _PhysicalExerciseEntryState extends State<PhysicalExerciseEntry> {
     setState(() {
       _selectedIndex = index;
     });
-    // Navigation logic here. Example:
-    if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/Dashboard');
-    }
-    if (index == 1) {
-      Navigator.pushReplacementNamed(context, '/BloodPressureEntry');
-    }
-    if (index == 2) {
-      Navigator.pushReplacementNamed(context, '/BloodSugarEntry');
-    }
-    if (index == 3) {
-      Navigator.pushReplacementNamed(context, '/FoodIntakeEntry');
-    }
-    if (index == 4) {
-      Navigator.pushReplacementNamed(context, '/ActivityEntry');
-    }
-    if (index == 5) {
-      Navigator.pushReplacementNamed(context, '/MedicationEntry');
-    }
-    if (index == 6) {
-      Navigator.pushReplacementNamed(context, '/Reports');
-    }
+    Components.dashboardWidget(context, index);
   }
 
   @override
@@ -1296,27 +1468,7 @@ class _FoodIntakeEntryState extends State<FoodIntakeEntry> {
     setState(() {
       _selectedIndex = index;
     });
-    if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/Dashboard');
-    }
-    if (index == 1) {
-      Navigator.pushReplacementNamed(context, '/BloodPressureEntry');
-    }
-    if (index == 2) {
-      Navigator.pushReplacementNamed(context, '/BloodSugarEntry');
-    }
-    if (index == 3) {
-      Navigator.pushReplacementNamed(context, '/FoodIntakeEntry');
-    }
-    if (index == 4) {
-      Navigator.pushReplacementNamed(context, '/ActivityEntry');
-    }
-    if (index == 5) {
-      Navigator.pushReplacementNamed(context, '/MedicationEntry');
-    }
-    if (index == 6) {
-      Navigator.pushReplacementNamed(context, '/Reports');
-    }
+    Components.dashboardWidget(context, index);
   }
 
   @override

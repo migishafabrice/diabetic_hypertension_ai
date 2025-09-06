@@ -36,7 +36,7 @@ class Register extends StatelessWidget {
             width: double.infinity,
             height: 200,
             decoration: BoxDecoration(),
-            child: Icon(Icons.add_alert, size: 50, color: Colors.white),
+            child: Icon(Icons.add_alert, size: 50, color: Colors.black),
           ),
           // Purple container
           Positioned(

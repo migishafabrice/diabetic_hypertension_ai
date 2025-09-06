@@ -28,4 +28,28 @@ class Components {
       ),
     );
   }
+
+  static void dashboardWidget(BuildContext context, int index) {
+    if (index == 0) {
+      Navigator.pushReplacementNamed(context, '/Dashboard');
+    }
+    if (index == 1) {
+      Navigator.pushReplacementNamed(context, '/BloodPressureEntry');
+    }
+    if (index == 2) {
+      Navigator.pushReplacementNamed(context, '/BloodSugarEntry');
+    }
+    if (index == 3) {
+      Navigator.pushReplacementNamed(context, '/FoodIntakeEntry');
+    }
+    if (index == 4) {
+      Navigator.pushReplacementNamed(context, '/ActivityEntry');
+    }
+    if (index == 5) {
+      Navigator.pushReplacementNamed(context, '/MedicationEntry');
+    }
+    if (index == 6) {
+      Navigator.pushReplacementNamed(context, '/Reports');
+    }
+  }
 }
