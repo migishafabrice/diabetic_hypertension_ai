@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healthapp/database/databaseService.dart';
+import 'package:healthapp/widgets/components.dart';
 import 'package:postgres/postgres.dart';
 
 final bloodSugarProvider =
@@ -12,24 +13,6 @@ class BloodSugarProvider extends StateNotifier<List<newBloodSugarEntry>> {
   BloodSugarProvider() : super([]);
 
   // Helper method to convert TimeOfDay to PostgreSQL time string
-  String timeOfDayToPostgresString(TimeOfDay timeOfDay) {
-    return "${timeOfDay.hour.toString().padLeft(2, '0')}:${timeOfDay.minute.toString().padLeft(2, '0')}";
-  }
-
-  // Helper method to convert PostgreSQL time string to TimeOfDay
-  TimeOfDay postgresStringToTimeOfDay(String timeString) {
-    try {
-      final parts = timeString.split(':');
-      if (parts.length >= 2) {
-        final hour = int.tryParse(parts[0]) ?? 0;
-        final minute = int.tryParse(parts[1]) ?? 0;
-        return TimeOfDay(hour: hour, minute: minute);
-      }
-      return TimeOfDay.now();
-    } catch (e) {
-      return TimeOfDay.now();
-    }
-  }
 
   Future<bool> addBloodSugarEntry(newBloodSugarEntry entry) async {
     try {
@@ -37,17 +20,17 @@ class BloodSugarProvider extends StateNotifier<List<newBloodSugarEntry>> {
       if (con != null) {
         await con.execute(
           Sql.named(
-            'INSERT INTO health_db.bloodsugar(userid,type_measurement,meal_realation, level, note, date_taken_on, time_taken_on, unit)'
-            'VALUES (@userId,@type_measurement,@meal_relation, @level, @note, @date_taken_on, @time_taken_on, @unit)',
+            'INSERT INTO health_db.bloodsugar(userid,type_measurement,meal_relation,level,date_taken_on,time_taken_on,note,unit)'
+            ' VALUES (@userId,@type_measurement,@meal_relation, @level, @date_taken_on, @time_taken_on,@note, @unit)',
           ),
           parameters: {
             'userId': entry.userId,
             'type_measurement': entry.type,
             'meal_relation': entry.mealRelation,
             'level': entry.sugarLevel,
-            'note': entry.note,
             'date_taken_on': entry.entryDate,
             'time_taken_on': timeOfDayToPostgresString(entry.entryTime),
+            'note': entry.note,
             'unit': entry.unit,
           },
         );
@@ -67,24 +50,23 @@ class BloodSugarProvider extends StateNotifier<List<newBloodSugarEntry>> {
       if (con != null) {
         List<List<dynamic>> results = await con.execute(
           Sql.named(
-            'SELECT id, userid,type_measurement, meal_realation, level, date_taken_on, time_taken_on,note, unit'
-            ' FROM health_db.bloodsugar WHERE userid = @userId date_taken_on DESC, time_taken_on DESC',
+            'SELECT id,userid,type_measurement,meal_relation,level,date_taken_on,time_taken_on,note,unit'
+            ' FROM health_db.bloodsugar WHERE userid = @userId order by date_taken_on DESC, time_taken_on DESC',
           ),
-
           parameters: {'userId': userId},
         );
 
         state = results.map((row) {
           return newBloodSugarEntry(
-            id: row[0] as int,
-            userId: row[1] as int,
-            type: row[2] as String,
-            mealRelation: row[3] as String,
-            sugarLevel: row[4] as double,
-            note: row[7] as String?,
-            entryDate: row[5] as DateTime,
-            entryTime: postgresStringToTimeOfDay(row[6] as String),
-            unit: row[9] as String,
+            id: safeParseInt(row[0]),
+            userId: safeParseInt(row[1]) ?? 0,
+            type: row[2]?.toString() ?? '',
+            mealRelation: row[3]?.toString() ?? '',
+            sugarLevel: safeParseDouble(row[4]),
+            entryDate: safeParseDateTime(row[5]),
+            entryTime: postgresStringToTimeOfDay(row[6]?.toString() ?? ''),
+            note: row[7]?.toString(),
+            unit: row[8]?.toString() ?? '',
           );
         }).toList();
       }

@@ -57,9 +57,10 @@ class Register extends StatelessWidget {
                 ),
               ),
               child: SingleChildScrollView(
+                reverse: true,
                 scrollDirection: Axis.vertical,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     SizedBox(height: 10),
                     Text(
@@ -219,7 +220,7 @@ class Register extends StatelessWidget {
                                 );
                                 int id = await Usermanage.createUser(user);
                                 if (id > 0) {
-                                  Components.showErrorSnackBar(
+                                  showErrorSnackBar(
                                     context,
                                     'You are registered successfully! Login now.',
                                     Icons.check_circle,
@@ -230,7 +231,7 @@ class Register extends StatelessWidget {
                                     '/Login',
                                   );
                                 } else {
-                                  Components.showErrorSnackBar(
+                                  showErrorSnackBar(
                                     context,
                                     'Error registering user!',
                                     Icons.error,
@@ -238,7 +239,7 @@ class Register extends StatelessWidget {
                                   );
                                 }
                               } else {
-                                Components.showErrorSnackBar(
+                                showErrorSnackBar(
                                   context,
                                   'Please fix the errors in red',
                                   Icons.error,

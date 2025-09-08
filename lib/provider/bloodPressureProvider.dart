@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healthapp/database/databaseService.dart';
+import 'package:healthapp/widgets/components.dart';
 import 'package:postgres/postgres.dart';
 
 final bloodPressureProvider =
@@ -12,13 +13,6 @@ final bloodPressureProvider =
 
 class BloodPressureNotifier extends StateNotifier<List<NewBloodPressureEntry>> {
   BloodPressureNotifier() : super([]);
-
-  // Helper method to convert TimeOfDay to PostgreSQL time string
-  String timeOfDayToPostgresString(TimeOfDay timeOfDay) {
-    return "${timeOfDay.hour.toString().padLeft(2, '0')}:${timeOfDay.minute.toString().padLeft(2, '0')}";
-  }
-
-  // Helper method to convert PostgreSQL time string to TimeOfDay
   TimeOfDay postgresStringToTimeOfDay(String timeString) {
     try {
       final parts = timeString.split(':');
@@ -73,14 +67,14 @@ class BloodPressureNotifier extends StateNotifier<List<NewBloodPressureEntry>> {
 
         final entries = result.map((row) {
           return NewBloodPressureEntry(
-            id: _safeParseInt(row[0]),
-            userId: _safeParseInt(row[7]) ?? 0, // Provide default if null
-            systolic: _safeParseInt(row[1]) ?? 0,
-            diastolic: _safeParseInt(row[2]) ?? 0,
-            pulse: _safeParseInt(row[3]) ?? 0,
-            note: _safeParseString(row[4]),
-            entryDate: _safeParseDateTime(row[5]),
-            entryTime: postgresStringToTimeOfDay(_safeParseString(row[6])),
+            id: safeParseInt(row[0]),
+            userId: safeParseInt(row[7]) ?? 0, // Provide default if null
+            systolic: safeParseInt(row[1]) ?? 0,
+            diastolic: safeParseInt(row[2]) ?? 0,
+            pulse: safeParseInt(row[3]) ?? 0,
+            note: safeParseString(row[4]),
+            entryDate: safeParseDateTime(row[5]),
+            entryTime: postgresStringToTimeOfDay(safeParseString(row[6])),
           );
         }).toList();
 
@@ -92,33 +86,6 @@ class BloodPressureNotifier extends StateNotifier<List<NewBloodPressureEntry>> {
   }
 
   // Safe type conversion helpers
-  int? _safeParseInt(dynamic value) {
-    if (value == null) return null;
-    if (value is int) return value;
-    if (value is String) return int.tryParse(value);
-    if (value is double) return value.toInt();
-    if (value is bool) return value ? 1 : 0;
-    return null;
-  }
-
-  String _safeParseString(dynamic value) {
-    if (value == null) return '';
-    if (value is String) return value;
-    return value.toString();
-  }
-
-  DateTime _safeParseDateTime(dynamic value) {
-    if (value == null) return DateTime.now();
-    if (value is DateTime) return value;
-    if (value is String) {
-      try {
-        return DateTime.parse(value);
-      } catch (e) {
-        return DateTime.now();
-      }
-    }
-    return DateTime.now();
-  }
 
   // Clear all entries
   void clearEntries() {

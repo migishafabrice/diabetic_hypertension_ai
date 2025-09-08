@@ -1,4 +1,3 @@
-import 'package:bcrypt/bcrypt.dart';
 import 'package:healthapp/database/databaseService.dart';
 import 'package:postgres/postgres.dart';
 
@@ -24,12 +23,10 @@ class Usermanage {
             'created_at': user.createdAt,
           },
         );
-
         final rows = result as List?;
         if (rows == null || rows.isEmpty) {
           throw Exception('No ID returned');
         }
-
         return rows[0][0] as int;
       }
       return row;
