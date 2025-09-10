@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healthapp/database/databaseService.dart';
 import 'package:healthapp/widgets/components.dart';
@@ -11,26 +10,32 @@ final medicationProvider =
 
 class MedicationProvider extends StateNotifier<List<NewMedicationEntry>> {
   MedicationProvider() : super([]);
-  Future<void> addMedicationEntry(NewMedicationEntry entry) async {
+  Future<bool> addMedicationEntry(NewMedicationEntry entry) async {
     try {
       Connection? con = await DatabaseService().openConnection();
       await con?.execute(
         Sql.named(
-          'INSERT INTO health_db.medication(userid, medication_name, dosage, frequency, note, date_taken_on, time_taken_on) VALUES (@userId, @medication_name, @dosage, @frequency, @note, @date_taken_on, @time_taken_on)',
+          'INSERT INTO health_db.medication(userid, medication_name,medication_type, dosage, frequency, note, active)'
+          ' VALUES (@userId, @medication_name,@medication_type, @dosage, @frequency, @note, @active)',
         ),
         parameters: {
           'userId': entry.userId,
           'medication_name': entry.medicationName,
+          'medication_type': entry.medicationType,
           'dosage': entry.dosage,
           'frequency': entry.frequency,
           'note': entry.note,
-          'date_taken_on': entry.entryDate,
-          'time_taken_on': entry.entryTime.toString(),
+          'active': entry.active,
         },
       );
 
       // Refresh the list after adding new entry
-      await getMedicationEntries(entry.userId);
+      bool medication = await getMedicationEntries(entry.userId);
+      if (medication) {
+        return true;
+      } else {
+        return false;
+      }
     } catch (e) {
       rethrow;
     }
@@ -53,12 +58,15 @@ class MedicationProvider extends StateNotifier<List<NewMedicationEntry>> {
     }
   }
 
-  Future<void> getMedicationEntries(int userId) async {
+  Future<bool> getMedicationEntries(int userId) async {
     try {
       Connection? con = await DatabaseService().openConnection();
       if (con != null) {
         List<List<dynamic>> results = await con.execute(
-          'SELECT id, medication_name, dosage, frequency, note, date_taken_on, time_taken_on FROM health_db.medication WHERE userid = @userId ORDER BY date_taken_on DESC, time_taken_on DESC',
+          Sql.named(
+            'SELECT id, medication_name,medication_type, dosage, frequency, note, active'
+            '  FROM health_db.medication WHERE userid = @userId ORDER BY created_at DESC',
+          ),
           parameters: {'userId': userId},
         );
 
@@ -66,15 +74,21 @@ class MedicationProvider extends StateNotifier<List<NewMedicationEntry>> {
           return NewMedicationEntry(
             id: row[0] as int,
             userId: userId,
-            medicationName: row[1] as String,
-            dosage: row[2] as String,
-            frequency: row[3] as String,
-            note: row[4] as String? ?? '',
-            entryDate: row[5] as DateTime,
-            entryTime: postgresStringToTimeOfDay(row[6] as String),
+            medicationName: safeParseString(row[1]),
+            medicationType: safeParseString(row[2]),
+            dosage: safeParseString(row[3]),
+            frequency: safeParseInt(row[4]) ?? 1,
+            note: row[5] as String? ?? '',
+            active: row[6] as bool,
           );
         }).toList();
+        if (state.isNotEmpty) {
+          return true;
+        } else {
+          return false;
+        }
       }
+      return false;
     } catch (e) {
       rethrow;
     }
@@ -85,20 +99,20 @@ class NewMedicationEntry {
   final int id;
   final int userId;
   final String medicationName;
+  final String medicationType;
   final String dosage;
-  final String frequency;
+  final int frequency;
+  final bool active;
   final String note;
-  final DateTime entryDate;
-  final TimeOfDay entryTime;
 
   NewMedicationEntry({
     required this.id,
     required this.userId,
     required this.medicationName,
+    required this.medicationType,
     required this.dosage,
     required this.frequency,
+    required this.active,
     required this.note,
-    required this.entryDate,
-    required this.entryTime,
   });
 }

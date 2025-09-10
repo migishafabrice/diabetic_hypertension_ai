@@ -44,14 +44,11 @@ void dashboardWidget(BuildContext context, int index) {
   if (index == 4) {
     Navigator.pushReplacementNamed(context, '/ActivityEntry');
   }
-  // if (index == 5) {
-  //   Navigator.pushReplacementNamed(context, '/MedicationEntry');
-  // }
+  if (index == 5) {
+    Navigator.pushReplacementNamed(context, '/MedicationEntry');
+  }
   if (index == 6) {
     Navigator.pushReplacementNamed(context, '/Reports');
-  }
-  if (index == 100) {
-    Navigator.pushReplacementNamed(context, '/MedicationEntry');
   }
 }
 
