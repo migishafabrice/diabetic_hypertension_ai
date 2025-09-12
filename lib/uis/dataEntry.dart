@@ -7,6 +7,7 @@ import 'package:healthapp/provider/bloodSugarProvider.dart';
 import 'package:healthapp/provider/bloodpressureProvider.dart';
 import 'package:healthapp/provider/exerciseProvider.dart';
 import 'package:healthapp/provider/foodProvider.dart';
+import 'package:healthapp/provider/medicationIntakeProvider.dart';
 import 'package:healthapp/provider/medicationProvider.dart';
 import 'package:healthapp/widgets/app_bottom_nav.dart';
 import 'package:healthapp/widgets/components.dart';
@@ -1115,7 +1116,7 @@ class _MedicationEntryState extends ConsumerState<MedicationEntry>
   final TextEditingController _timeIntake = TextEditingController();
   final TextEditingController _noteIntake = TextEditingController();
   final TextEditingController _medicationType = TextEditingController();
-  final TextEditingController _medicationTypeIntake = TextEditingController();
+  int _medicationIndex = 0;
   int _frequency = 1;
   String session = 'Other';
   final _formKey = GlobalKey<FormState>();
@@ -1231,10 +1232,11 @@ class _MedicationEntryState extends ConsumerState<MedicationEntry>
   Widget _newMedicationIntakeTab() {
     final user = ref.watch(authProvider);
     final records = ref.watch(medicationProvider);
-    var items;
+    //var items;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Form(
+        key: _formKeyIntake,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1246,16 +1248,49 @@ class _MedicationEntryState extends ConsumerState<MedicationEntry>
             ),
             SizedBox(height: 10),
             TypeAheadField(
-              controller: _medicationName,
+              controller: _medicationNameIntake,
               itemBuilder: (context, suggestion) {
-                return ListTile(title: Text(suggestion.toString()));
+                return ListTile(
+                  title: Text(
+                    suggestion.toString(),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  contentPadding: EdgeInsets.only(
+                    left: 30.0,
+                    top: 0,
+                    bottom: 0.0,
+                    right: 5.0,
+                  ),
+                );
               },
               onSelected: (suggestion) {
-                _medicationName.text = suggestion.toString();
+                _medicationNameIntake.text = suggestion.toString();
+                // Split the suggestion and compare each value with the record fields
+                List<String> parts = suggestion.toString().split(' | ');
+                int idx = records.indexWhere(
+                  (med) =>
+                      parts.length == 3 &&
+                      med.medicationName == parts[0] &&
+                      med.medicationType == parts[1] &&
+                      med.dosage == parts[2],
+                );
+                if (idx != -1) {
+                  _medicationIndex = records[idx].id;
+                }
               },
               suggestionsCallback: (pattern) async {
-                // Return your suggestions here
-                return [];
+                return records
+                    .where(
+                      (med) =>
+                          ('${med.medicationName} | ${med.medicationType} | ${med.dosage}')
+                              .toLowerCase()
+                              .contains(pattern.toLowerCase()),
+                    )
+                    .map(
+                      (med) =>
+                          ('${med.medicationName} | ${med.medicationType} | ${med.dosage}'),
+                    )
+                    .toList();
               },
               builder: (context, controller, focusNode) {
                 return TextFormField(
@@ -1263,7 +1298,7 @@ class _MedicationEntryState extends ConsumerState<MedicationEntry>
                   focusNode: focusNode,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   decoration: InputDecoration(
-                    labelText: 'Meciation Name',
+                    labelText: 'Medication Name',
                     labelStyle: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -1275,36 +1310,46 @@ class _MedicationEntryState extends ConsumerState<MedicationEntry>
             SizedBox(height: 10),
             Row(
               children: [
-                DropdownButtonFormField(
-                  value: session,
-                  items: const [
-                    DropdownMenuItem(value: 'Morning', child: Text('Morning')),
-                    DropdownMenuItem(value: 'Noon', child: Text('Noon')),
-                    DropdownMenuItem(value: 'Evening', child: Text('Evening')),
-                    DropdownMenuItem(value: 'Other', child: Text('Other')),
-                  ],
-                  onChanged: (val) {
-                    setState(() {
-                      session = val!;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    labelText: 'Session',
-                    labelStyle: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                Expanded(
+                  child: DropdownButtonFormField(
+                    value: session,
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'Morning',
+                        child: Text('Morning'),
+                      ),
+                      DropdownMenuItem(value: 'Noon', child: Text('Noon')),
+                      DropdownMenuItem(
+                        value: 'Evening',
+                        child: Text('Evening'),
+                      ),
+                      DropdownMenuItem(value: 'Other', child: Text('Other')),
+                    ],
+                    onChanged: (val) {
+                      setState(() {
+                        session = val!;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Session',
+                      labelStyle: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
                 SizedBox(width: 10),
-                TextFormField(
-                  controller: _dosageTakenIntake,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  decoration: InputDecoration(
-                    labelText: 'Dosage Taken',
-                    labelStyle: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                Expanded(
+                  child: TextFormField(
+                    controller: _dosageTakenIntake,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    decoration: InputDecoration(
+                      labelText: 'Quantity Taken',
+                      labelStyle: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -1329,7 +1374,7 @@ class _MedicationEntryState extends ConsumerState<MedicationEntry>
                 Expanded(
                   child: TextFormField(
                     controller: _dateIntake,
-                    onTap: () => Datepicker.selectDate(context, _date),
+                    onTap: () => Datepicker.selectDate(context, _dateIntake),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
                       labelText: 'Date',
@@ -1344,7 +1389,7 @@ class _MedicationEntryState extends ConsumerState<MedicationEntry>
                 Expanded(
                   child: TextFormField(
                     controller: _timeIntake,
-                    onTap: () => Datepicker.selectTime(context, _time),
+                    onTap: () => Datepicker.selectTime(context, _timeIntake),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
                       labelText: 'Time',
@@ -1361,7 +1406,60 @@ class _MedicationEntryState extends ConsumerState<MedicationEntry>
             SizedBox(height: 10),
             Center(
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () async {
+                  try {
+                    if (_formKeyIntake.currentState!.validate()) {
+                      NewMedicationIntakeEntry entry = NewMedicationIntakeEntry(
+                        id: 0,
+                        userId: user!.id,
+                        medicationId: _medicationIndex,
+                        dosageTaken: _dosageTakenIntake.text,
+                        session: session,
+                        note: _noteIntake.text,
+                        entryDate: _dateIntake.text.isNotEmpty
+                            ? DateTime.parse(_dateIntake.text)
+                            : DateTime.now(),
+                        entryTime: TimeOfDay.now(),
+                      );
+                      if (await ref
+                          .read(medicationIntakeProvider.notifier)
+                          .addNewMedicationIntakeEntry(entry)) {
+                        showErrorSnackBar(
+                          context,
+                          'Medication Intake Entry Added Successfully',
+                          Icons.check_circle,
+                          Colors.green,
+                        );
+                      } else {
+                        showErrorSnackBar(
+                          context,
+                          'Failed to add medication intake entry',
+                          Icons.error,
+                          Colors.red,
+                        );
+                      }
+                      _medicationNameIntake.clear();
+                      _medicationIndex = 0;
+                      _dosageTakenIntake.clear();
+                      _noteIntake.clear();
+                    }
+                  } catch (e) {
+                    print('Error adding medication intake entry: $e');
+                    setState(() {
+                      _isLoadingIntake = false;
+                    });
+                    showErrorSnackBar(
+                      context,
+                      e.toString(),
+                      Icons.error,
+                      Colors.red,
+                    );
+                  } finally {
+                    setState(() {
+                      _isLoadingIntake = false;
+                    });
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue[700],
                   foregroundColor: Colors.white,
@@ -1403,6 +1501,7 @@ class _MedicationEntryState extends ConsumerState<MedicationEntry>
             ),
             SizedBox(height: 10),
             TextFormField(
+              controller: _medicationName,
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               decoration: InputDecoration(
                 labelText: 'Medication Name',
@@ -1430,6 +1529,7 @@ class _MedicationEntryState extends ConsumerState<MedicationEntry>
                 ),
                 Expanded(
                   child: TextFormField(
+                    controller: _dosageTaken,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
                       labelText: 'Dosage (e.g., 500 mg)',
@@ -1466,6 +1566,7 @@ class _MedicationEntryState extends ConsumerState<MedicationEntry>
             ),
             SizedBox(height: 10),
             TextFormField(
+              controller: _note,
               maxLines: null,
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               decoration: InputDecoration(

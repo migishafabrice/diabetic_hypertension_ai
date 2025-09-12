@@ -23,7 +23,7 @@ class MedicationIntakeProvider
       if (con != null) {
         await con.execute(
           Sql.named(
-            "insert into medication_intake(user_id,medication_id,note,date_taken_on,time_taken) "
+            "insert into health_db.medication_intake(userid,medication_id,note,date_taken_on,time_taken_on,session) "
             "values(@userId,@medication_id,@note,@entryDate,@entryTime,@session)",
           ),
           parameters: {
@@ -31,7 +31,7 @@ class MedicationIntakeProvider
             "medication_id": entry.medicationId,
             "note": entry.note,
             "entryDate": entry.entryDate,
-            "entryTime": entry.entryTime,
+            "entryTime": timeOfDayToPostgresString(entry.entryTime),
             "session": entry.session,
           },
         );
@@ -51,12 +51,12 @@ class MedicationIntakeProvider
         // Join medication_intake and medication tables
         List<List<dynamic>> results = await con.execute(
           Sql.named('''
-          SELECT mi.id, mi.user_id , mi.medication_name, m.medication_type, m.dosage,
+          SELECT mi.id, mi.userid , mi.medication_name, m.medication_type, m.dosage,
            m.frequency, mi.note, mi.date_taken_on, mi.time_taken, mi.session, mi.active
           FROM health_db.medication_intake mi
           JOIN health_db.medication m ON mi.medication_id = m.id
           WHERE mi.user_id = @userId
-          ORDER BY mi.date_taken_on DESC, mi.time_taken DESC
+          ORDER BY mi.date_taken_on DESC, mi.time_taken_on DESC
           '''),
           parameters: {'userId': userId},
         );
