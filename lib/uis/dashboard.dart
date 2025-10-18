@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:healthapp/uis/dataEntry.dart';
 import 'package:healthapp/widgets/app_bottom_nav.dart';
+import 'package:healthapp/widgets/components.dart';
 
 class Dashboard extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -14,10 +15,11 @@ class Dashboard extends StatefulWidget {
 class _DashboardState extends State<Dashboard> {
   int _selectedIndex = 0;
 
-  void _onItemTapped(int index) {
+  void _onTabTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+    dashboardWidget(context, index);
   }
 
   @override
@@ -43,31 +45,7 @@ class _DashboardState extends State<Dashboard> {
           ),
           AppBottomNavigationBar(
             selectedIndex: _selectedIndex,
-            onTap: (index) {
-              _onItemTapped(index);
-              // Example navigation: match previous logic
-              if (index == 0) {
-                Navigator.pushReplacementNamed(context, '/Dashboard');
-              }
-              if (index == 1) {
-                Navigator.pushReplacementNamed(context, '/BloodPressureEntry');
-              }
-              if (index == 2) {
-                Navigator.pushReplacementNamed(context, '/BloodSugarEntry');
-              }
-              if (index == 3) {
-                Navigator.pushReplacementNamed(context, '/FoodIntakeEntry');
-              }
-              if (index == 4) {
-                Navigator.pushReplacementNamed(context, '/ActivityEntry');
-              }
-              if (index == 5) {
-                Navigator.pushReplacementNamed(context, '/MedicationEntry');
-              }
-              if (index == 6) {
-                Navigator.pushReplacementNamed(context, '/Reports');
-              } // Add other navigation as needed.
-            },
+            onTap: _onTabTapped,
           ),
         ],
       ),

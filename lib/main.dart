@@ -7,6 +7,7 @@ import 'package:healthapp/splashScreen.dart';
 import 'package:healthapp/uis/dashboard.dart';
 import 'package:healthapp/uis/dataEntry.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:healthapp/uis/report.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
@@ -34,6 +35,7 @@ class MyApp extends ConsumerWidget {
         //'/Reports': (context) => const Reports(),
         '/Splashscreen': (context) => const Splashscreen(),
         '/MedicationEntry': (context) => MedicationEntry(),
+        '/Report': (context) => buildReport(),
       },
       home: const Splashscreen(),
     );
