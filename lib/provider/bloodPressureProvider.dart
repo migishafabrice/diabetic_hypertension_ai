@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:healthapp/database/databaseService.dart';
-import 'package:healthapp/widgets/components.dart';
-import 'package:postgres/postgres.dart';
+import '../database/blood_pressure_dao.dart';
+import '../models/local_blood_pressure.dart';
+import '../widgets/components.dart';
 
 final bloodPressureProvider =
-    StateNotifierProvider<BloodPressureNotifier, List<NewBloodPressureEntry>>((
+    StateNotifierProvider<BloodPressureNotifier, List<LocalBloodPressure>>((
       ref,
     ) {
       return BloodPressureNotifier();
     });
 
-class BloodPressureNotifier extends StateNotifier<List<NewBloodPressureEntry>> {
+class BloodPressureNotifier extends StateNotifier<List<LocalBloodPressure>> {
   BloodPressureNotifier() : super([]);
-  TimeOfDay postgresStringToTimeOfDay(String timeString) {
+  final BloodPressureDao _dao = BloodPressureDao();
+
+  TimeOfDay stringToTimeOfDay(String timeString) {
     try {
       final parts = timeString.split(':');
       if (parts.length >= 2) {
@@ -27,28 +29,14 @@ class BloodPressureNotifier extends StateNotifier<List<NewBloodPressureEntry>> {
     }
   }
 
-  Future<void> addBloodPressureEntry(NewBloodPressureEntry entry) async {
-    try {
-      Connection? con = await DatabaseService().openConnection();
-      if (con != null) {
-        await con.execute(
-          Sql.named(
-            'INSERT INTO health_db.bloodpressure(userid, systolic, diastolic, pulse, note, date_taken_on, time_taken_on) VALUES (@userId, @systolic, @diastolic, @pulse, @note, @date_taken_on, @time_taken_on)',
-          ),
-          parameters: {
-            'userId': entry.userId,
-            'systolic': entry.systolic,
-            'diastolic': entry.diastolic,
-            'pulse': entry.pulse,
-            'note': entry.note,
-            'date_taken_on': entry.entryDate,
-            'time_taken_on': timeOfDayToPostgresString(entry.entryTime),
-          },
-        );
+  String timeOfDayToString(TimeOfDay time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
 
-        // Refresh the list after adding new entry
-        await getBloodPressureEntries(entry.userId);
-      }
+  Future<void> addBloodPressureEntry(LocalBloodPressure entry) async {
+    try {
+      await _dao.insertBloodPressure(entry);
+      await getBloodPressureEntries(entry.userid);
     } catch (e) {
       rethrow;
     }
@@ -56,83 +44,33 @@ class BloodPressureNotifier extends StateNotifier<List<NewBloodPressureEntry>> {
 
   Future<void> getBloodPressureEntries(int userId) async {
     try {
-      Connection? con = await DatabaseService().openConnection();
-      if (con != null) {
-        final result = await con.execute(
-          Sql.named(
-            'SELECT * FROM health_db.bloodpressure WHERE userid = @userId ORDER BY date_taken_on DESC, time_taken_on DESC',
-          ),
-          parameters: {'userId': userId},
-        );
-
-        final entries = result.map((row) {
-          return NewBloodPressureEntry(
-            id: safeParseInt(row[0]),
-            userId: safeParseInt(row[7]) ?? 0, // Provide default if null
-            systolic: safeParseInt(row[1]) ?? 0,
-            diastolic: safeParseInt(row[2]) ?? 0,
-            pulse: safeParseInt(row[3]) ?? 0,
-            note: safeParseString(row[4]),
-            entryDate: safeParseDateTime(row[5]),
-            entryTime: postgresStringToTimeOfDay(safeParseString(row[6])),
-          );
-        }).toList();
-
-        state = entries;
-      }
+      final entries = await _dao.getAllBloodPressureForUser(userId);
+      state = entries;
     } catch (e) {
       rethrow;
     }
   }
-
-  // Safe type conversion helpers
 
   // Clear all entries
   void clearEntries() {
     state = [];
   }
 
-  Future<void> deleteBloodPressureEntry(int entryId) async {
+  Future<void> deleteBloodPressureEntry(int entryId, int userId) async {
     try {
-      Connection? con = await DatabaseService().openConnection();
-      if (con != null) {
-        await con.execute(
-          Sql.named('DELETE FROM health_db.bloodpressure WHERE id = @entryId'),
-          parameters: {'entryId': entryId},
-        );
-
-        // Refresh the list after deleting
-        await getBloodPressureEntries(state[0].userId);
-      }
+      await _dao.deleteBloodPressure(entryId);
+      await getBloodPressureEntries(userId);
     } catch (e) {
       rethrow;
     }
   }
-}
 
-class NewBloodPressureEntry {
-  final int? id;
-  final int userId;
-  final int systolic;
-  final int diastolic;
-  final int pulse;
-  final String note;
-  final DateTime entryDate;
-  final TimeOfDay entryTime;
-
-  NewBloodPressureEntry({
-    this.id,
-    required this.userId,
-    required this.systolic,
-    required this.diastolic,
-    required this.pulse,
-    required this.note,
-    required this.entryDate,
-    required this.entryTime,
-  });
-
-  @override
-  String toString() {
-    return 'BloodPressureEntry(id: $id, systolic: $systolic, diastolic: $diastolic, pulse: $pulse)';
+  Future<void> updateBloodPressureEntry(LocalBloodPressure entry) async {
+    try {
+      await _dao.updateBloodPressure(entry);
+      await getBloodPressureEntries(entry.userid);
+    } catch (e) {
+      rethrow;
+    }
   }
 }

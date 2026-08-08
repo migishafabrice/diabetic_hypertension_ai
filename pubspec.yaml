@@ -1,4 +1,4 @@
-name: healthapp
+name: diacare
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -41,6 +41,14 @@ dependencies:
   flutter_riverpod: ^2.6.1
   cupertino_icons: ^1.0.8
   flutter_typeahead: ^5.2.0
+  sqflite: ^2.4.1
+  path_provider: ^2.1.5
+  path: ^1.9.1
+  lottie: ^3.1.3
+  shimmer: ^3.0.0
+  cached_network_image: ^3.4.1
+  connectivity_plus: ^6.1.3
+  google_generative_ai: ^0.4.7
 
 dev_dependencies:
   flutter_test:
@@ -52,6 +60,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  sqflite_common_ffi: ^2.3.6
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

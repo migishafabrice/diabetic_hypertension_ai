@@ -48,6 +48,12 @@ void dashboardWidget(BuildContext context, int index) {
     Navigator.pushReplacementNamed(context, '/MedicationEntry');
   }
   if (index == 6) {
+    Navigator.pushReplacementNamed(context, '/BodyMeasurementEntry');
+  }
+  if (index == 7) {
+    Navigator.pushReplacementNamed(context, '/SymptomsEntry');
+  }
+  if (index == 8) {
     Navigator.pushReplacementNamed(context, '/Report');
   }
 }

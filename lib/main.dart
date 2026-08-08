@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:healthapp/auth/login.dart';
-import 'package:healthapp/auth/register.dart';
-import 'package:healthapp/provider/authProvider.dart';
-import 'package:healthapp/splashScreen.dart';
-import 'package:healthapp/uis/dashboard.dart';
-import 'package:healthapp/uis/dataEntry.dart';
+import 'package:diacare/auth/login.dart';
+import 'package:diacare/auth/register.dart';
+import 'package:diacare/splashScreen.dart';
+import 'package:diacare/uis/dashboard.dart';
+import 'package:diacare/uis/dataEntry.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:healthapp/uis/report.dart';
+import 'package:diacare/uis/report.dart';
+import 'package:diacare/uis/health_analysis.dart';
+import 'package:diacare/uis/ai_recommendations.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
@@ -17,25 +18,26 @@ Future<void> main() async {
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // ignore: unused_local_variable
-    final authState = ref.watch(authProvider);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(primarySwatch: Colors.green, useMaterial3: true),
       routes: {
-        '/Login': (context) => Login(),
-        '/Register': (context) => Register(),
+        '/Login': (context) => const Login(),
+        '/Register': (context) => const Register(),
         '/Dashboard': (context) => const Dashboard(userData: {}),
-        '/BloodPressureEntry': (context) => BloodPressureEntry(),
-        '/BloodSugarEntry': (context) => BloodSugarEntry(),
-        '/ActivityEntry': (context) => PhysicalExerciseEntry(),
-        '/FoodIntakeEntry': (context) => FoodIntakeEntry(),
-        //'/Reports': (context) => const Reports(),
+        '/BloodPressureEntry': (context) => const BloodPressureEntry(),
+        '/BloodSugarEntry': (context) => const BloodSugarEntry(),
+        '/ActivityEntry': (context) => const PhysicalExerciseEntry(),
+        '/FoodIntakeEntry': (context) => const FoodIntakeEntry(),
+        '/BodyMeasurementEntry': (context) => const BodyMeasurementEntry(),
         '/Splashscreen': (context) => const Splashscreen(),
-        '/MedicationEntry': (context) => MedicationEntry(),
-        '/Report': (context) => buildReport(),
+        '/MedicationEntry': (context) => const MedicationEntry(),
+        '/SymptomsEntry': (context) => const SymptomsEntry(),
+        '/Report': (context) => const BuildReport(),
+        '/HealthAnalysis': (context) => const HealthAnalysis(),
+        '/AIRecommendations': (context) => const AIRecommendationsScreen(),
       },
       home: const Splashscreen(),
     );

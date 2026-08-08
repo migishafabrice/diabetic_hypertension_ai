@@ -1,11 +1,10 @@
-import 'package:healthapp/database/databaseService.dart';
+import 'package:diacare/database/databaseService.dart';
 import 'package:postgres/postgres.dart';
 
 class Usermanage {
   static Future<int> createUser(UserModel user) async {
     try {
       Connection? con = await DatabaseService().openConnection();
-      int row = 0;
       if (con != null) {
         final result = await con.execute(
           Sql.named(
@@ -25,13 +24,15 @@ class Usermanage {
         );
         final rows = result as List?;
         if (rows == null || rows.isEmpty) {
-          throw Exception('No ID returned');
+          print('No ID returned');
+          return 0;
         }
         return rows[0][0] as int;
       }
-      return row;
+      return 0;
     } catch (e) {
-      rethrow;
+      print('Error creating user: $e');
+      return 0;
     }
   }
 }
